@@ -1,0 +1,45 @@
+# !! このファイルは .gitignore に含めること
+# ⚠ sensitive値はtfvarsに書かない（TF_VAR_xxx 環境変数で注入）
+# ⚠ Terraform の変数優先順位: tfvars > 環境変数 のため、空文字でも書くとenv varが無視される
+
+# trocco_api_key    → TF_VAR_trocco_api_key で注入（tfvarsには書かない）
+
+# ─── kintone 接続 ─────────────────────────────────────
+# 【モードA】既存接続を使う場合（推奨）: connection_id を設定
+# kintone_connection_id = 123
+
+# 【モードB】Terraformで新規作成する場合: connection_id をコメントアウト
+kintone_connection_name = "kintone-顧客管理"
+kintone_domain          = "example.cybozu.com"
+# kintone_api_token → TF_VAR_kintone_api_token で注入（tfvarsには書かない）
+kintone_app_id          = "1"
+kintone_app_name        = "顧客管理"
+
+# BigQuery connection ID (TROCCO管理画面で作成した接続のID)
+bq_connection_id = 1
+bq_dataset       = "demo_dataset"
+bq_table         = "kintone_customers"
+bq_location      = "asia-northeast1"
+bq_load_mode     = "replace"
+
+job_name = "kintone-顧客管理-to-bigquery"
+
+input_columns = [
+  { name = "レコード番号", type = "long" },
+  { name = "顧客名", type = "string" },
+  { name = "メールアドレス", type = "string" },
+  { name = "電話番号", type = "string" },
+  { name = "会社名", type = "string" },
+  { name = "作成日時", type = "timestamp", format = "%Y-%m-%dT%H:%M:%S%z" },
+  { name = "更新日時", type = "timestamp", format = "%Y-%m-%dT%H:%M:%S%z" },
+]
+
+filter_columns = [
+  { name = "record_number", src = "レコード番号", type = "long" },
+  { name = "customer_name", src = "顧客名", type = "string" },
+  { name = "email", src = "メールアドレス", type = "string" },
+  { name = "phone", src = "電話番号", type = "string" },
+  { name = "company", src = "会社名", type = "string" },
+  { name = "created_at", src = "作成日時", type = "timestamp", format = "%Y-%m-%dT%H:%M:%S%z" },
+  { name = "updated_at", src = "更新日時", type = "timestamp", format = "%Y-%m-%dT%H:%M:%S%z" },
+]

@@ -1,0 +1,45 @@
+# ─── Credentials & Secrets ───────────────────────────
+.env.local
+.env.*.local
+
+# ─── Terraform ───────────────────────────────────────
+# Auto-generated pipeline definitions (may contain secrets)
+pipelines/*/
+!pipelines/.gitkeep
+
+# State files (contain connection credentials)
+*.tfstate
+*.tfstate.backup
+*.tfstate.*.backup
+
+# Working directory
+.terraform/
+.terraform.lock.hcl
+
+# Variable files (may contain secrets)
+*.tfvars
+!*.tfvars.example
+
+# Plan output
+*.tfplan
+tfplan
+
+# ─── Internal / Ad-hoc files ────────────────────────
+# Development design docs (not for public repo)
+00_architecture/
+
+# ─── OS ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Editors ─────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── Temp files ──────────────────────────────────────
+/tmp/
+*.tmp
+*.log

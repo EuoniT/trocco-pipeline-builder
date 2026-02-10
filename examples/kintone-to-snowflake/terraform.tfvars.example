@@ -1,0 +1,54 @@
+# Example terraform.tfvars for kintone → Snowflake pipeline
+#
+# Copy this file to terraform.tfvars and fill in your values:
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# ⚠ IMPORTANT: Sensitive values must NOT be written in tfvars.
+# Terraform variable precedence: tfvars > env vars.
+# Writing empty strings here would override TF_VAR_xxx environment variables.
+#
+# Inject via environment variables instead:
+#   export TF_VAR_trocco_api_key="$TROCCO_API_KEY"
+#   export TF_VAR_kintone_api_token="$KINTONE_API_TOKEN"
+#   export TF_VAR_snowflake_password="$SNOWFLAKE_PASSWORD"
+
+# trocco_api_key    → TF_VAR_trocco_api_key で注入（tfvarsには書かない）
+
+kintone_connection_name = "kintone-customer-mgmt"
+kintone_domain          = "example.cybozu.com"
+# kintone_api_token → TF_VAR_kintone_api_token で注入（tfvarsには書かない）
+kintone_app_id          = "1"
+kintone_app_name        = "Customer Management"
+
+snowflake_connection_name = "snowflake-demo"
+snowflake_host            = "xxx.snowflakecomputing.com"
+snowflake_user            = "TROCCO_USER"
+# snowflake_password → TF_VAR_snowflake_password で注入（tfvarsには書かない）
+snowflake_role            = "SYSADMIN"
+snowflake_warehouse       = "COMPUTE_WH"
+snowflake_database        = "DEMO_DB"
+snowflake_schema          = "PUBLIC"
+snowflake_table           = "kintone_customers"
+snowflake_load_mode       = "replace"
+
+job_name = "kintone-customers-to-snowflake"
+
+input_columns = [
+  { name = "Record Number", type = "long" },
+  { name = "Customer Name", type = "string" },
+  { name = "Email", type = "string" },
+  { name = "Phone", type = "string" },
+  { name = "Company", type = "string" },
+  { name = "Created At", type = "timestamp", format = "%Y-%m-%dT%H:%M:%S%z" },
+  { name = "Updated At", type = "timestamp", format = "%Y-%m-%dT%H:%M:%S%z" },
+]
+
+filter_columns = [
+  { name = "record_number", src = "Record Number", type = "long" },
+  { name = "customer_name", src = "Customer Name", type = "string" },
+  { name = "email", src = "Email", type = "string" },
+  { name = "phone", src = "Phone", type = "string" },
+  { name = "company", src = "Company", type = "string" },
+  { name = "created_at", src = "Created At", type = "timestamp", format = "%Y-%m-%dT%H:%M:%S%z" },
+  { name = "updated_at", src = "Updated At", type = "timestamp", format = "%Y-%m-%dT%H:%M:%S%z" },
+]
