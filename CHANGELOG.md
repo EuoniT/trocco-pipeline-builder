@@ -1,19 +1,20 @@
-# Changelog
+# 変更履歴
 
-All notable changes to this project will be documented in this file.
+このプロジェクトの主な変更点をすべて記録します。
 
 ## [Unreleased]
 
-### Added
-- Initial release
-- `/setup-pipeline` Claude Code Skill
-- kintone source support (Get Form Fields API integration)
-- Snowflake destination support (Terraform + REST API fallback)
-- BigQuery destination support (recommended for Phase 1)
-- Reference documents: connector-catalog, type-mapping, terraform-patterns
-- Individual connector references: `reference/sources/kintone.md`, `reference/destinations/bigquery.md`, `reference/destinations/snowflake.md`
-- Example HCL: kintone-to-snowflake, kintone-to-bigquery
-- `--dry-run` mode (plan only)
-- Automatic field type mapping (kintone → TROCCO column types)
-- Japanese field name → English snake_case conversion
+### 追加
+
+- 初回リリース
+- `/setup-pipeline` Claude Code スキル
+- kintone ソースサポート（フォームフィールド取得 API 連携）
+- Snowflake デスティネーションサポート（Terraform + REST API フォールバック）
+- BigQuery デスティネーションサポート
+- リファレンスドキュメント: connector-catalog, type-mapping, terraform-patterns
+- 個別コネクタリファレンス: `reference/sources/kintone.md`, `reference/destinations/bigquery.md`, `reference/destinations/snowflake.md`
+- サンプル HCL: kintone-to-snowflake, kintone-to-bigquery
+- `--dry-run` モード（plan のみ）
+- フィールド型の自動マッピング（kintone → TROCCO カラム型）
+- 日本語フィールド名 → 英語 snake_case 変換
 - Apache License 2.0

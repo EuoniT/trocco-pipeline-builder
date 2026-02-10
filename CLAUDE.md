@@ -1,10 +1,12 @@
-# NL-to-Pipeline
+# TROCCO Pipeline Builder
 
 Build TROCCO data pipelines from natural language using Claude Code.
 
 ## Quick Start
 
 ```bash
+git clone https://github.com/kentayamamoto/trocco-pipeline-builder.git
+cd trocco-pipeline-builder
 cp .env.example .env.local   # Configure credentials
 /setup-pipeline kintone to BigQuery
 /setup-pipeline kintone to BigQuery --dry-run

@@ -1,6 +1,6 @@
 # Architecture
 
-Technical design overview of NL-to-Pipeline.
+Technical design overview of TROCCO Pipeline Builder.
 
 ## Feasibility Assessment
 

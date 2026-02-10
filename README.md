@@ -1,132 +1,138 @@
-# NL-to-Pipeline
+# TROCCO Pipeline Builder
 
-> Build TROCCO data pipelines from natural language using Claude Code.
+> 自然言語から TROCCO データパイプラインを構築する Claude Code スキル
 
-A Claude Code Skill that parses commands like `kintone to Snowflake`, auto-generates Terraform HCL, and deploys TROCCO data transfer pipelines. **Zero programming required** — just Markdown prompts and declarative HCL.
+`kintone to Snowflake` のようなコマンドを解析し、Terraform HCL を自動生成して TROCCO のデータ転送パイプラインをデプロイします。**プログラミング不要** — Markdown プロンプトと宣言的な HCL だけで完結します。
 
-## How It Works
+> **Note:** 2025/02/10 現在、動作確認済みの組み合わせは **kintone → BigQuery** のみです。その他のコネクタは実験的サポートです。
+
+## 免責事項
+
+本プロジェクトは個人による非公式のオープンソースプロジェクトであり、[TROCCO](https://trocco.io)（株式会社 primeNumber）、[kintone](https://kintone.dev/)（サイボウズ株式会社）、[Snowflake](https://www.snowflake.com/)、[Google Cloud](https://cloud.google.com/)、および [Anthropic](https://www.anthropic.com/) とは一切関係がありません。各製品名・サービス名はそれぞれの企業の商標または登録商標です。
+
+## 仕組み
 
 ```
 /setup-pipeline kintone to Snowflake
 ```
 
-1. Parse natural language input (source → destination)
-2. Fetch source schema via API (e.g., kintone Get Form Fields)
-3. Auto-map field types to TROCCO column types
-4. Generate Terraform HCL (connections + job definition)
-5. `terraform plan` → user review → `terraform apply`
-6. Test run via TROCCO API → report results
+1. 自然言語入力を解析（ソース → デスティネーション）
+2. ソーススキーマを API 経由で取得（例: kintone フォームフィールド取得 API）
+3. フィールド型を TROCCO カラム型に自動マッピング
+4. Terraform HCL を生成（コネクション＋ジョブ定義）
+5. `terraform plan` → ユーザー確認 → `terraform apply`
+6. TROCCO API 経由でテスト実行 → 結果レポート
 
-## Quick Start
+## クイックスタート
 
-### Prerequisites
+### 前提条件
 
-| Tool | Version | Install |
-|------|---------|---------|
-| [Claude Code](https://claude.ai/code) | Latest | See docs |
+| ツール | バージョン | インストール |
+|--------|-----------|-------------|
+| [Claude Code](https://claude.ai/code) | 最新 | ドキュメント参照 |
 | [Terraform](https://www.terraform.io/) | >= 1.5.0 | `brew install terraform` |
-| [jq](https://jqlang.github.io/jq/) | Latest | `brew install jq` |
-| [TROCCO](https://trocco.io) Account | Advanced+ | API access required |
+| [jq](https://jqlang.github.io/jq/) | 最新 | `brew install jq` |
+| [TROCCO](https://trocco.io) アカウント | Advanced+ | API アクセスが必要 |
 
-### Setup
+### セットアップ
 
 ```bash
-git clone https://github.com/YOUR_ORG/nl-to-pipeline.git
-cd nl-to-pipeline
+git clone https://github.com/kentayamamoto/trocco-pipeline-builder.git
+cd trocco-pipeline-builder
 cp .env.example .env.local
-# Edit .env.local with your credentials
+# .env.local を編集して認証情報を設定
 ```
 
-### Run
+### 実行
 
 ```bash
-# Build a pipeline:
+# パイプラインを構築:
 /setup-pipeline kintone to Snowflake
 
-# Dry-run mode (plan only, no apply):
+# ドライランモード（plan のみ、apply なし）:
 /setup-pipeline kintone to Snowflake --dry-run
 
-# Natural language is supported:
+# 日本語の自然言語にも対応:
 /setup-pipeline kintoneの顧客管理アプリをSnowflakeに毎日転送して
 ```
 
-## Supported Connectors
+## 対応コネクタ
 
-### Sources
+### ソース（入力元）
 
 kintone, MySQL, PostgreSQL, BigQuery, Salesforce, Google Spreadsheets, S3, GCS, Snowflake, HTTP, Google Analytics 4, Google Ads, SFTP, Databricks, HubSpot
 
-### Destinations
+### デスティネーション（出力先）
 
 BigQuery, Snowflake\*, MySQL, PostgreSQL, Salesforce, Google Spreadsheets, kintone, Databricks, SFTP
 
-\*Snowflake: via Terraform Provider with REST API fallback.
+\*Snowflake: Terraform Provider 経由（REST API フォールバック付き）
 
-See [reference/connector-catalog.md](reference/connector-catalog.md) for details.
+詳細は [reference/connector-catalog.md](reference/connector-catalog.md) を参照してください。
 
-## Demo Setup
+## デモ環境の構築
 
-To try with free accounts:
+無料アカウントで試す手順：
 
-1. **kintone Developer License** (free, 1 year): [Register here](https://kintone.dev/en/developer-license-registration-form/)
-   - Create a "Customer Management" app from templates
-   - Generate an API token with read permission
-2. **Snowflake Free Trial** (30 days, $400 credits): [Sign up here](https://signup.snowflake.com/)
-   - Create `DEMO_DB.PUBLIC` schema
-3. **Configure `.env.local`** with your credentials
-4. **Run:** `/setup-pipeline kintone to Snowflake`
+1. **kintone 開発者ライセンス**（無料・1年間）: [登録はこちら](https://kintone.dev/en/developer-license-registration-form/)
+   - テンプレートから「顧客管理」アプリを作成
+   - 読み取り権限付きの API トークンを発行
+2. **Snowflake フリートライアル**（30日間・$400 クレジット）: [登録はこちら](https://signup.snowflake.com/)
+   - `DEMO_DB.PUBLIC` スキーマを作成
+3. `.env.local` に認証情報を設定
+4. 実行: `/setup-pipeline kintone to Snowflake`
 
-## Project Structure
+## プロジェクト構成
 
 ```
 .claude/commands/
-  setup-pipeline.md          # Skill entry point (/setup-pipeline)
+  setup-pipeline.md          # スキルのエントリポイント（/setup-pipeline）
 reference/
-  connector-catalog.md       # Supported connectors & TROCCO API info
-  type-mapping.md            # kintone → TROCCO column type mapping
-  terraform-patterns.md      # HCL generation rules & templates
-  sources/kintone.md         # kintone source reference
-  destinations/bigquery.md   # BigQuery destination reference
-  destinations/snowflake.md  # Snowflake destination reference
+  connector-catalog.md       # 対応コネクタ一覧と TROCCO API 情報
+  type-mapping.md            # kintone → TROCCO カラム型変換テーブル
+  terraform-patterns.md      # HCL 生成ルールとテンプレート
+  sources/kintone.md         # kintone ソースリファレンス
+  destinations/bigquery.md   # BigQuery デスティネーションリファレンス
+  destinations/snowflake.md  # Snowflake デスティネーションリファレンス
 examples/
-  kintone-to-bigquery/       # Reference HCL: kintone → BigQuery
-  kintone-to-snowflake/      # Reference HCL: kintone → Snowflake
+  kintone-to-bigquery/       # 参考 HCL: kintone → BigQuery
+  kintone-to-snowflake/      # 参考 HCL: kintone → Snowflake
 docs/
-  architecture.md            # Technical design overview
-pipelines/                   # Auto-generated by terraform apply (gitignored)
+  architecture.md            # 技術設計概要
+pipelines/                   # terraform apply で自動生成（gitignore 対象）
 ```
 
-## Security
+## セキュリティ
 
-- All credentials in `.env.local` (gitignored)
-- Terraform sensitive variables injected via `TF_VAR_xxx` environment variables
-- `terraform apply` requires explicit user approval
-- kintone record data is never fetched (field definitions only)
-- `terraform.tfstate` is gitignored
+- すべての認証情報は `.env.local` に格納（gitignore 対象）
+- Terraform の sensitive 変数は `TF_VAR_xxx` 環境変数で注入
+- `terraform apply` にはユーザーの明示的な承認が必要
+- kintone のレコードデータは取得しない（フィールド定義のみ）
+- `terraform.tfstate` は gitignore 対象
 
-## Adding a New Connector
+## 新しいコネクタの追加
 
-1. Create `reference/sources/{connector}.md` or `reference/destinations/{connector}.md`
-2. Add entry to `reference/connector-catalog.md`
-3. No changes to `setup-pipeline.md` needed
+1. `reference/sources/{connector}.md` または `reference/destinations/{connector}.md` を作成
+2. `reference/connector-catalog.md` にエントリを追加
+3. `setup-pipeline.md` の変更は不要
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+詳細は [CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。
 
-## Architecture
+## アーキテクチャ
 
-See [docs/architecture.md](docs/architecture.md) for technical design.
+技術設計の詳細は [docs/architecture.md](docs/architecture.md) を参照してください。
 
-## Contributing
+## コントリビューション
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+[CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。
 
-## License
+## ライセンス
 
-Apache License 2.0 — See [LICENSE](LICENSE).
+Apache License 2.0 — [LICENSE](LICENSE) を参照してください。
 
-## References
+## 参考リンク
 
-- [TROCCO API Documentation](https://documents.trocco.io/apidocs)
+- [TROCCO API ドキュメント](https://documents.trocco.io/apidocs)
 - [TROCCO Terraform Provider](https://registry.terraform.io/providers/trocco-io/trocco/latest)
 - [kintone REST API](https://kintone.dev/en/docs/kintone/rest-api/)
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
