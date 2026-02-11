@@ -1,10 +1,11 @@
 # TROCCO Pipeline Builder
 
-> 自然言語から TROCCO データパイプラインを構築する Claude Code スキル
+自然言語から TROCCO データパイプラインを構築する Claude Code スキル
 
-`kintoneのデータをBigQueryに連携して` のような自然言語コマンドから、Terraform HCL を自動生成して TROCCO のデータ転送パイプラインをデプロイします。**プログラミング不要** — Markdown プロンプトと宣言的な HCL だけで完結します。
+`kintoneのデータをBigQueryに連携して` のような自然言語コマンドから、Terraform HCL を自動生成して TROCCO のデータ転送パイプラインをデプロイします。
+**プログラミング不要** — Markdown プロンプトと宣言的な HCL だけで完結します。
 
-> **Note:** 2025/02/10 現在、動作確認済みの組み合わせは **kintone → BigQuery** のみです。その他のコネクタは実験的サポートです。
+> **Note:** 2026/02/11 現在、動作確認済みの組み合わせは **kintone → BigQuery** のみです。その他のコネクタは実験的サポートです。
 
 ## 免責事項
 
