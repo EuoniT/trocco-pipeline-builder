@@ -37,7 +37,7 @@ set -a && source .env.local && set +a
 
 ## Step 2: 型変換
 
-**reference/type-mapping.md** の該当セクションに従い、フィールド情報を変換する。
+**reference/sources/{connector_name}/type-mapping.md** に従い、フィールド情報を変換する。
 
 1. `input_option_columns` 配列を生成（フィールド名 + TROCCOカラムタイプ）
 2. `filter_columns` 配列を生成（英語カラム名 + src + タイプ + format）
@@ -149,6 +149,8 @@ variable "{prefix}_connection_name" {
    - `{ConnectorName}` → 表示名（例: `MySQL`, `PostgreSQL`）
    - `{PREFIX}` → 環境変数プレフィックス（例: `MYSQL`, `PG`）
    - `{prefix}` → Terraform変数プレフィックス（例: `mysql`, `pg`）
-3. `reference/connector-catalog.md` にエントリ追加
-4. （任意）`reference/sources/{connector_name}.md` に詳細リファレンス作成
-5. （任意）`reference/type-mapping.md` に型変換ルール追加
+3. `reference/sources/{connector_name}/` ディレクトリを作成し、以下のファイルを配置:
+   - `README.md` — 概要・接続方法・Terraform設定
+   - `type-mapping.md` — 型変換ルール
+   - `env-vars.json` — 環境変数定義
+4. （任意）`examples/{connector_name}-to-{dest}/` にサンプルHCL追加

@@ -30,12 +30,10 @@ allowed-tools: Bash, Read, Write, Glob, Grep
 ## リファレンス読み込み（必須）
 
 処理を開始する前に、必ず以下のファイルをReadツールで読み込んでください:
-- `reference/connector-catalog.md` — 対応コネクタの確認
-- `reference/type-mapping.md` — フィールドタイプ変換表
-- `reference/terraform-patterns.md` — HCL生成ルール・テンプレート
+- `reference/common/terraform-patterns.md` — HCL生成ルール・共通パターン
+- `reference/common/trocco-api.md` — Provider・API情報
 
-ソースまたはデスティネーションが connector-catalog.md に記載されていない場合は、
-ユーザーに未対応であることを伝えて停止してください。
+ソース/デスティネーションの対応確認はSKILLファイルのGlob検出で行います（Step 1-3 参照）。
 
 ## Skill選択・実行フロー
 
@@ -67,7 +65,8 @@ Skillファイルに従い以下を実行:
 - Step 3 (src): ソース接続確認
 
 さらに、ソースの詳細リファレンスも読み込む:
-- `reference/sources/{src}.md`（存在する場合）
+- `reference/sources/{src}/README.md`（存在する場合）
+- `reference/sources/{src}/type-mapping.md`（存在する場合 — フィールドタイプ変換表）
 
 Skillファイルが存在しない場合は、ユーザーに「{src} ソースは未実装です」と伝えて停止。
 
@@ -77,13 +76,13 @@ Globで `.claude/skills/destinations/{dest}/SKILL.md` の存在を確認し、Re
 Skillファイルに従いデスティネーション接続確認を実行。
 
 さらに、デスティネーションの詳細リファレンスも読み込む:
-- `reference/destinations/{dest}.md`（存在する場合）
+- `reference/destinations/{dest}/README.md`（存在する場合）
 
 Skillファイルが存在しない場合は、ユーザーに「{dest} デスティネーションは未実装です」と伝えて停止。
 
 ### Step 4: Terraform HCL 生成
 
-`reference/terraform-patterns.md` のルールに従い、ソースSkill・デスティネーションSkillから取得した情報を統合してHCLを生成する。
+`reference/common/terraform-patterns.md` のルールに従い、ソースSkill・デスティネーションSkillから取得した情報を統合してHCLを生成する。
 
 ディレクトリ: `pipelines/{source}-to-{dest}-{YYYYMMDD-HHMMSS}/`
 
@@ -124,7 +123,7 @@ Writeツールで以下を生成:
 | ジョブ実行失敗 | status = "error" | 「TROCCOの管理画面でジョブログを確認してください」と案内 |
 | ジョブ結果API権限エラー | HTTP 401/403 on `GET /api/jobs/{id}` | ジョブ投入成功は伝えつつ、TROCCO管理画面で結果確認を案内。APIキーに「転送ジョブの閲覧」権限追加を推奨 |
 | ラベル無効エラー | terraform apply で "invalid label included" | TROCCOでは事前登録済みのラベル名のみ使用可能。HCLから `labels` を除去して再apply |
-| Snowflake output未対応 | plan時エラー | TROCCO REST API直接呼び出しにフォールバック（connector-catalog.md参照） |
+| Snowflake output未対応 | plan時エラー | TROCCO REST API直接呼び出しにフォールバック（reference/destinations/snowflake/README.md参照） |
 | ソースSkill未存在 | Globで検出なし | 「{src} ソースは未実装です」と案内して停止 |
 | デスティネーションSkill未存在 | Globで検出なし | 「{dest} デスティネーションは未実装です」と案内して停止 |
 

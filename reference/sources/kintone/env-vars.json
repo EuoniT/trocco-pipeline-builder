@@ -1,0 +1,48 @@
+{
+  "display_name": "kintone",
+  "description": "kintone開発者ライセンス: https://kintone.dev/en/developer-license-registration-form/",
+  "modes": {
+    "a": {
+      "label": "既存接続を使う（推奨）",
+      "description": "TROCCO管理画面で kintone 接続を事前に作成し、そのIDを設定",
+      "variables": [
+        {
+          "name": "KINTONE_CONNECTION_ID",
+          "required": true,
+          "sensitive": false,
+          "description": "TROCCO管理画面で作成した kintone 接続のID",
+          "example": ""
+        }
+      ]
+    },
+    "b": {
+      "label": "Terraformで新規作成",
+      "description": "KINTONE_CONNECTION_ID を空にすると、以下の情報でTerraformが接続を新規作成",
+      "variables": [
+        {
+          "name": "KINTONE_DOMAIN",
+          "required": true,
+          "sensitive": false,
+          "description": "kintoneのサブドメイン",
+          "example": "your-subdomain.cybozu.com"
+        },
+        {
+          "name": "KINTONE_API_TOKEN",
+          "required": true,
+          "sensitive": true,
+          "description": "kintone APIトークン",
+          "example": "your_kintone_api_token"
+        }
+      ]
+    }
+  },
+  "always": [
+    {
+      "name": "KINTONE_APP_ID",
+      "required": true,
+      "sensitive": false,
+      "description": "kintone アプリID",
+      "example": "1"
+    }
+  ]
+}

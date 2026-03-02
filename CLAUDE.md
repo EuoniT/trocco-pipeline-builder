@@ -17,7 +17,7 @@ Markdown プロンプト + Terraform HCL のみで完結（プログラミング
 .claude/
   commands/setup-pipeline.md              # オーケストレーター（/setup-pipeline）
   skills/
-    sources/{connector}/SKILL.md          # ソース Skill（kintone, google_spreadsheets）
+    sources/{connector}/SKILL.md          # ソース Skill（kintone, google_spreadsheets, s3）
     sources/_template.md                  # 新規ソース Skill テンプレート
     destinations/{connector}/SKILL.md     # デスティネーション Skill（bigquery, snowflake）
     destinations/_template.md             # 新規デスティネーション Skill テンプレート
@@ -26,14 +26,19 @@ Markdown プロンプト + Terraform HCL のみで完結（プログラミング
       terraform-execute/SKILL.md         #   Terraform plan/apply
       test-and-report/SKILL.md           #   テスト実行・結果レポート
       generate-env/                      #   .env.local テンプレート生成
-        SKILL.md / env-vars.json
+        SKILL.md / env-vars.json         #   （env-vars.json は common 部分のみ）
 reference/
-  connector-catalog.md                    # 対応コネクタ一覧・TROCCO API 情報
-  type-mapping.md                         # フィールド型変換表
-  terraform-patterns.md                   # HCL 生成ルール・テンプレート
-  sources/{connector}.md                  # ソースリファレンス
-  destinations/{connector}.md             # デスティネーションリファレンス
-examples/{source}-to-{dest}/              # 参考 HCL 実装
+  common/
+    terraform-patterns.md                 # HCL 生成ルール（共通パターン）
+    trocco-api.md                         # Provider・API 情報
+  sources/{connector}/                    # ソースリファレンス（自己完結型）
+    README.md                             #   概要・接続・Terraform設定
+    type-mapping.md                       #   型変換ルール
+    env-vars.json                         #   環境変数定義
+  destinations/{connector}/               # デスティネーションリファレンス（自己完結型）
+    README.md                             #   概要・接続・Terraform設定
+    env-vars.json                         #   環境変数定義
+examples/{source}-to-{dest}/              # 参考 HCL 実装 + README
 docs/architecture.md                      # アーキテクチャ詳細
 pipelines/                                # terraform apply で自動生成（gitignored）
 ```
@@ -51,15 +56,20 @@ pipelines/                                # terraform apply で自動生成（gi
 - `required_version = ">= 1.5.0"`
 - Provider: `trocco-io/trocco` version `~> 0.24`
 - `labels` は使用しない（TROCCO で事前登録済みのラベル名のみ受け付けるため）
-- 詳細は `reference/terraform-patterns.md` を参照
+- 詳細は `reference/common/terraform-patterns.md` を参照
 
 ## 環境変数
 
 - `.env.local` に設定（テンプレート: `.env.example`）
 - 各コネクタの必要変数は Skill ファイルの「必要環境変数」セクションを参照
-- 変数定義一覧: `.claude/skills/infrastructure/generate-env/env-vars.json`
+- 共通変数: `.claude/skills/infrastructure/generate-env/env-vars.json`
+- コネクタ固有変数: `reference/sources/{connector}/env-vars.json`, `reference/destinations/{connector}/env-vars.json`
 
 ## 拡張方法
 
-新コネクタ追加は `docs/architecture.md`「Adding a New Connector」セクション参照。
-オーケストレーター変更不要（Glob による動的 Skill 検出）。
+新コネクタ追加はフォルダ作成+ファイル配置のみで完結（既存ファイル修正ゼロ）:
+1. `.claude/skills/sources/{connector}/SKILL.md` を作成（テンプレートから）
+2. `reference/sources/{connector}/` に `README.md`, `type-mapping.md`, `env-vars.json` を配置
+3. （任意）`examples/{src}-to-{dest}/` にサンプルHCL追加
+
+詳細は `docs/architecture.md`「Adding a New Connector」セクション参照。

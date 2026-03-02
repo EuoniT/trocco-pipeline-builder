@@ -28,19 +28,25 @@ argument-hint: "[source] to [destination]"
 
 ### 1. コネクタ対応確認
 
-`reference/connector-catalog.md` を Read で読み込み、指定されたソース/デスティネーションが対応しているか確認する。
-未対応の場合は「未対応のコネクタです」と案内して停止。
+Glob で以下の SKILL ファイルの存在を確認し、指定されたソース/デスティネーションが対応しているか確認する:
+- `.claude/skills/sources/{src}/SKILL.md`
+- `.claude/skills/destinations/{dest}/SKILL.md`
+
+SKILL ファイルが存在しない場合は「未対応のコネクタです」と案内して停止。
 
 ### 2. env-vars.json の読み込み
 
-`.claude/skills/infrastructure/generate-env/env-vars.json` を Read で読み込み、JSON をパースする。
+以下の3ファイルを Read で読み込み、JSON をパースする:
+- `.claude/skills/infrastructure/generate-env/env-vars.json` — common 部分（TROCCO_API_KEY 等）
+- `reference/sources/{src}/env-vars.json` — 指定ソースの変数
+- `reference/destinations/{dest}/env-vars.json` — 指定デスティネーションの変数
 
 ### 3. 必要セクションの抽出
 
-以下の3セクションから変数定義を抽出する:
-- `common` — 全パイプライン共通（TROCCO_API_KEY 等）
-- `sources.{src}` — 指定ソースの変数
-- `destinations.{dest}` — 指定デスティネーションの変数
+読み込んだ3つのJSONファイルから変数定義を抽出する:
+- `common` — `.claude/skills/infrastructure/generate-env/env-vars.json` の `common` セクション
+- ソース — `reference/sources/{src}/env-vars.json` 全体
+- デスティネーション — `reference/destinations/{dest}/env-vars.json` 全体
 
 ### 4. .env.local テンプレートの整形
 

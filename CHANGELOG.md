@@ -11,8 +11,8 @@
 - kintone ソースサポート（フォームフィールド取得 API 連携）
 - Snowflake デスティネーションサポート（Terraform + REST API フォールバック）
 - BigQuery デスティネーションサポート
-- リファレンスドキュメント: connector-catalog, type-mapping, terraform-patterns
-- 個別コネクタリファレンス: `reference/sources/kintone.md`, `reference/destinations/bigquery.md`, `reference/destinations/snowflake.md`
+- リファレンスドキュメント: `reference/common/` (terraform-patterns, trocco-api)
+- 個別コネクタリファレンス: `reference/sources/{connector}/`, `reference/destinations/{connector}/`
 - サンプル HCL: kintone-to-snowflake, kintone-to-bigquery
 - `--dry-run` モード（plan のみ）
 - フィールド型の自動マッピング（kintone → TROCCO カラム型）

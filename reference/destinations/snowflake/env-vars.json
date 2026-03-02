@@ -1,0 +1,97 @@
+{
+  "display_name": "Snowflake",
+  "description": "Snowflake無料トライアル: https://signup.snowflake.com/",
+  "modes": {
+    "a": {
+      "label": "既存接続を使う",
+      "description": "TROCCO管理画面で Snowflake 接続を事前に作成し、そのIDを設定",
+      "variables": [
+        {
+          "name": "SNOWFLAKE_CONNECTION_ID",
+          "required": true,
+          "sensitive": false,
+          "description": "TROCCO管理画面で作成した Snowflake 接続のID",
+          "example": ""
+        }
+      ]
+    },
+    "b": {
+      "label": "Terraformで新規作成",
+      "description": "SNOWFLAKE_CONNECTION_ID を空にすると、以下の情報でTerraformが接続を新規作成",
+      "variables": [
+        {
+          "name": "SNOWFLAKE_HOST",
+          "required": true,
+          "sensitive": false,
+          "description": "Snowflakeアカウントのホスト名",
+          "example": "your-account.snowflakecomputing.com"
+        },
+        {
+          "name": "SNOWFLAKE_USER",
+          "required": true,
+          "sensitive": false,
+          "description": "Snowflakeユーザー名",
+          "example": "TROCCO_USER"
+        },
+        {
+          "name": "SNOWFLAKE_AUTH_METHOD",
+          "required": false,
+          "sensitive": false,
+          "description": "認証方式: \"user_password\"（デフォルト）または \"key_pair\"",
+          "example": "user_password"
+        },
+        {
+          "name": "SNOWFLAKE_PASSWORD",
+          "required": false,
+          "sensitive": true,
+          "description": "user_password の場合のパスワード",
+          "example": "your_snowflake_password"
+        },
+        {
+          "name": "SNOWFLAKE_PRIVATE_KEY",
+          "required": false,
+          "sensitive": true,
+          "description": "key_pair の場合の秘密鍵（\\n リテラルで改行を記載）",
+          "example": ""
+        }
+      ]
+    }
+  },
+  "always": [
+    {
+      "name": "SNOWFLAKE_WAREHOUSE",
+      "required": true,
+      "sensitive": false,
+      "description": "Snowflake ウェアハウス名（output_option で使用、両モード必須）",
+      "example": "COMPUTE_WH"
+    },
+    {
+      "name": "SNOWFLAKE_DATABASE",
+      "required": true,
+      "sensitive": false,
+      "description": "Snowflake データベース名（output_option で使用、両モード必須）",
+      "example": "DEMO_DB"
+    },
+    {
+      "name": "SNOWFLAKE_SCHEMA",
+      "required": false,
+      "sensitive": false,
+      "description": "Snowflake スキーマ名（output_option で使用、デフォルト: PUBLIC）",
+      "example": "PUBLIC"
+    },
+    {
+      "name": "SNOWFLAKE_TABLE",
+      "required": false,
+      "sensitive": false,
+      "description": "Snowflake テーブル名（省略時は Claude Code がソース情報から自動決定）",
+      "example": ""
+    },
+    {
+      "name": "SNOWFLAKE_ROLE",
+      "required": true,
+      "sensitive": false,
+      "description": "Snowflake ロール名（TROCCOに割り当てたロール）",
+      "example": "TROCCO_ROLE"
+    }
+  ]
+}

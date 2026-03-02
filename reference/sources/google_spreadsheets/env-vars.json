@@ -1,0 +1,48 @@
+{
+  "display_name": "Google Spreadsheets",
+  "description": "Google Spreadsheets ソース",
+  "modes": {
+    "a": {
+      "label": "既存接続を使う（推奨）",
+      "description": "TROCCO管理画面で Google Spreadsheets 接続を事前に作成し、そのIDを設定",
+      "variables": [
+        {
+          "name": "GS_CONNECTION_ID",
+          "required": true,
+          "sensitive": false,
+          "description": "TROCCO管理画面で作成した Google Spreadsheets 接続のID",
+          "example": ""
+        }
+      ]
+    },
+    "b": {
+      "label": "Terraformで新規作成",
+      "description": "GS_CONNECTION_ID を空にすると、以下の情報でTerraformが接続を新規作成",
+      "variables": [
+        {
+          "name": "GS_SERVICE_ACCOUNT_JSON_KEY",
+          "required": true,
+          "sensitive": true,
+          "description": "サービスアカウントのJSONキーファイルの内容",
+          "example": ""
+        }
+      ]
+    }
+  },
+  "always": [
+    {
+      "name": "GS_SPREADSHEET_ID",
+      "required": true,
+      "sensitive": false,
+      "description": "スプレッドシートIDをURLから取得",
+      "example": "your_spreadsheet_id"
+    },
+    {
+      "name": "GS_WORKSHEET_TITLE",
+      "required": false,
+      "sensitive": false,
+      "description": "ワークシート名（省略時は最初のシート）",
+      "example": "Sheet1"
+    }
+  ]
+}

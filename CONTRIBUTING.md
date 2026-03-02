@@ -8,26 +8,27 @@
 
 ### 手順
 
-1. リファレンスファイルを作成:
-   - ソース: `reference/sources/{connector}.md`
-   - デスティネーション: `reference/destinations/{connector}.md`
+1. SKILL ファイルを作成:
+   - ソース: `.claude/skills/sources/{connector}/SKILL.md`（テンプレート: `_template.md`）
+   - デスティネーション: `.claude/skills/destinations/{connector}/SKILL.md`（テンプレート: `_template.md`）
 
-2. リファレンスファイルに以下を記載:
-   - 必要な環境変数
-   - スキーマ取得方法（API コールまたは手動）
-   - Terraform の `input_option_type` / `output_option_type`
-   - コネクタ固有のパラメータ
+2. Reference ディレクトリを作成:
+   - ソース: `reference/sources/{connector}/` に以下を配置:
+     - `README.md` — 概要・接続方法・Terraform設定
+     - `type-mapping.md` — 型変換ルール
+     - `env-vars.json` — 環境変数定義
+   - デスティネーション: `reference/destinations/{connector}/` に以下を配置:
+     - `README.md` — 概要・接続方法・Terraform設定
+     - `env-vars.json` — 環境変数定義
 
-3. `reference/connector-catalog.md` にエントリを追加
+3. （任意）`examples/{source}-to-{dest}/` にサンプルHCLを追加
 
-4. （任意）`examples/{source}-to-{dest}/` にサンプルを追加
-
-5. `--dry-run` でテスト:
+4. `--dry-run` でテスト:
    ```
    /setup-pipeline {source} to {dest} --dry-run
    ```
 
-**`setup-pipeline.md` の変更は不要です。** Claude Code が実行時に `reference/` ファイルを動的に読み取ります。
+**既存ファイルの修正は不要です。** Claude Code が Glob で SKILL と Reference を動的に検出します。
 
 ## 開発環境のセットアップ
 
@@ -40,7 +41,7 @@
 
 - 1つの PR につき 1 コネクタ
 - PR の説明に `--dry-run` のテスト出力を含める
-- `reference/connector-catalog.md` を更新する
+- `reference/sources/{connector}/` または `reference/destinations/{connector}/` を作成する
 - `CHANGELOG.md` を更新する
 
 ## Issue の報告

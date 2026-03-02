@@ -51,7 +51,7 @@ echo "HTTP Status: $HTTP_CODE"
 
 ## Step 2: 型変換
 
-**reference/type-mapping.md** の kintone セクションに従い、フィールド情報を変換する。
+**reference/sources/kintone/type-mapping.md** に従い、フィールド情報を変換する。
 
 ```bash
 jq -r '
@@ -63,7 +63,7 @@ jq -r '
 
 > **注意:** jqフィルタはシングルクォートで囲む。不等号比較はINパターン（select + not）を使用。jqはファイル引数で呼ぶ。
 
-type-mapping.md の変換ルールを適用し:
+reference/sources/kintone/type-mapping.md の変換ルールを適用し:
 1. `input_option_columns` 配列を生成（kintoneフィールドコード + TROCCOカラムタイプ）
 2. `filter_columns` 配列を生成（英語カラム名 + src + タイプ + format）
 

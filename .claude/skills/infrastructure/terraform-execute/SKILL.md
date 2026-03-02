@@ -52,7 +52,7 @@ plan にエラーがある場合:
 3. 3回失敗した場合はエラー内容をユーザーに報告して停止
 
 **Snowflake デスティネーションの場合:**
-plan失敗時は `reference/destinations/snowflake.md` の REST API フォールバック手順を実行する。
+plan失敗時は `reference/destinations/snowflake/README.md` の REST API フォールバック手順を実行する。
 
 ## 5. --dry-run チェック
 

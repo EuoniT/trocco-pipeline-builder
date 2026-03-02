@@ -37,7 +37,7 @@ User input: "/setup-pipeline kintone to BigQuery"
 ┌───────────────────────────────────┐
 │  setup-pipeline.md                │  ← Orchestrator (~120 lines)
 │  - Parse input (source/dest)      │
-│  - Check connector-catalog.md     │
+│  - Read common references          │
 │  - Read & execute source Skill    │
 │  - Read destination Skill         │
 │  - Integrate HCL generation       │
@@ -79,22 +79,24 @@ User input: "/setup-pipeline kintone to BigQuery"
 
 ### Adding a New Connector
 
-**New source:**
+**New source** (folder creation + file placement only, zero existing file modifications):
 1. Copy `.claude/skills/sources/_template.md` to `.claude/skills/sources/{name}/SKILL.md`
 2. Replace placeholders and add connector-specific logic
-3. (Optional) Create `reference/sources/{name}.md` for detailed reference
-4. Add entry to `reference/connector-catalog.md`
-5. Add environment variable definitions to `.claude/skills/infrastructure/generate-env/env-vars.json` (`sources` section)
-6. **No changes to orchestrator required** (dynamic Skill detection via Glob)
+3. Create `reference/sources/{name}/` directory with:
+   - `README.md` — Overview, connection methods, Terraform configuration
+   - `type-mapping.md` — Field type to TROCCO column type mapping rules
+   - `env-vars.json` — Environment variable definitions
+4. (Optional) Add example HCL to `examples/{name}-to-{dest}/`
+5. **No changes to orchestrator or shared files required** (dynamic Skill/Reference detection via Glob)
 
-**New destination:**
+**New destination** (folder creation + file placement only, zero existing file modifications):
 1. Copy `.claude/skills/destinations/_template.md` to `.claude/skills/destinations/{name}/SKILL.md`
 2. Replace placeholders and add connector-specific logic
-3. (Optional) Create `reference/destinations/{name}.md` for detailed reference
-4. Add entry to `reference/connector-catalog.md`
-5. Add HCL template to `reference/terraform-patterns.md`
-6. Add environment variable definitions to `.claude/skills/infrastructure/generate-env/env-vars.json` (`destinations` section)
-7. **No changes to orchestrator required**
+3. Create `reference/destinations/{name}/` directory with:
+   - `README.md` — Overview, connection methods, Terraform configuration
+   - `env-vars.json` — Environment variable definitions
+4. (Optional) Add example HCL to `examples/{src}-to-{name}/`
+5. **No changes to orchestrator or shared files required**
 
 ## Processing Flow
 
@@ -166,9 +168,9 @@ User input: "/setup-pipeline kintone to Snowflake"
 ## 環境変数テンプレート生成
 
 `.claude/skills/infrastructure/generate-env/SKILL.md` が `.env.local` テンプレート生成を担当する。
-同ディレクトリの `env-vars.json` を Read で読み取り、指定されたソース/デスティネーションに必要な変数のみを含むテンプレートを Write ツールで出力する（外部スクリプト不要）。
+共通の `env-vars.json`（TROCCO_API_KEY 等）と、各コネクタの `reference/sources/{src}/env-vars.json`、`reference/destinations/{dest}/env-vars.json` を Read で読み取り、指定されたソース/デスティネーションに必要な変数のみを含むテンプレートを Write ツールで出力する（外部スクリプト不要）。
 
-`env-vars.json` は全コネクタの環境変数定義を構造化データとして持つ。Skill のデータソースであると同時に、新規コネクタ追加時の変数登録先でもある。
+各コネクタの環境変数定義は `reference/` 配下の `env-vars.json` に分散配置されているため、新規コネクタ追加時に既存ファイルの修正は不要。
 
 ## Key Technical Decisions
 
@@ -195,7 +197,7 @@ The `snowflake_output_option` exists in Terraform Provider schema but lacks offi
 
 1. Analyze the error message
 2. Fall back to TROCCO REST API (`POST /api/job_definitions`) for Snowflake output
-3. See `reference/connector-catalog.md` for API details
+3. See `reference/destinations/snowflake/README.md` for API details
 
 ## Security Model
 
@@ -234,24 +236,27 @@ The `snowflake_output_option` exists in Terraform Provider schema but lacks offi
 
 ## Extensibility
 
-Adding a new connector requires only 1 Skill file + optional reference. Use the provided templates:
+Adding a new connector requires only folder creation + file placement (zero existing file modifications):
 
 ```
 .claude/skills/sources/_template.md                    # Source template (copy to start)
 .claude/skills/sources/{connector}/SKILL.md            # Source Skill
 .claude/skills/destinations/_template.md               # Destination template (copy to start)
 .claude/skills/destinations/{connector}/SKILL.md       # Destination Skill
-reference/sources/{connector}.md                       # (Optional) Detailed reference
-reference/destinations/{connector}.md                  # (Optional) Detailed reference
+reference/sources/{connector}/README.md                # Connector reference
+reference/sources/{connector}/type-mapping.md          # Type mapping rules
+reference/sources/{connector}/env-vars.json            # Environment variable definitions
+reference/destinations/{connector}/README.md           # Connector reference
+reference/destinations/{connector}/env-vars.json       # Environment variable definitions
 ```
 
-Update `reference/connector-catalog.md` with the new entry. No changes to the orchestrator (`setup-pipeline.md`) needed — it dynamically detects Skills via Glob at runtime.
+No changes to the orchestrator (`setup-pipeline.md`) or any shared files needed — it dynamically detects Skills and References via Glob at runtime.
 
 ## Technical Risks
 
 | # | Risk | Impact | Mitigation |
 |---|------|--------|------------|
-| R1 | Snowflake output unsupported in Terraform | High | REST API fallback (see connector-catalog.md) |
+| R1 | Snowflake output unsupported in Terraform | High | REST API fallback (see reference/destinations/snowflake/README.md) |
 | R2 | kintone field type conversion gaps | Medium | Unknown types → `string` fallback + warning |
 | R3 | Claude Code generates invalid HCL | Medium | `terraform plan` → self-correction loop (max 3 retries) |
 | R4 | TROCCO API rate limiting | Low | Retry with exponential backoff |

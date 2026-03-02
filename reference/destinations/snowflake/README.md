@@ -102,7 +102,7 @@ GRANT USAGE ON SCHEMA {db}.{schema} TO ROLE {role};
 
 -- テーブル・ステージの作成（TROCCO はステージング経由でロード）
 GRANT CREATE TABLE ON SCHEMA {db}.{schema} TO ROLE {role};
-GRANT CREATE STAGE ON SCHEMA {db}.{schema} TO ROLE {role};  
+GRANT CREATE STAGE ON SCHEMA {db}.{schema} TO ROLE {role};
 
 -- ウェアハウスの利用
 GRANT USAGE ON WAREHOUSE {wh} TO ROLE {role};

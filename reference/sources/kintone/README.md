@@ -95,7 +95,7 @@ input_option = {
 
 ## Type Mapping
 
-See `reference/type-mapping.md` for complete kintone field type to TROCCO column type mapping.
+See `reference/sources/kintone/type-mapping.md` for complete kintone field type to TROCCO column type mapping.
 
 ## API Call Notes
 

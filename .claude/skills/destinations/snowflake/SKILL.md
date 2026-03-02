@@ -238,8 +238,7 @@ fi
 
 terraform plan で `snowflake_output_option` にエラーが出た場合、TROCCO REST API で直接ジョブ定義を作成する。
 
-詳細は `reference/destinations/snowflake.md` の「REST API Fallback」セクション、
-および `reference/connector-catalog.md` の「Snowflake デスティネーションのフォールバック手順」を参照。
+詳細は `reference/destinations/snowflake/README.md` の「REST API Fallback」セクションを参照。
 
 ```bash
 source .env.local

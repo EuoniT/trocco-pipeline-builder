@@ -137,6 +137,7 @@ fi
    - `{ConnectorName}` → 表示名（例: `MySQL`, `PostgreSQL`）
    - `{PREFIX}` → 環境変数プレフィックス（例: `MYSQL`, `PG`）
    - `{prefix}` → Terraform変数プレフィックス（例: `mysql`, `pg`）
-3. `reference/connector-catalog.md` にエントリ追加
-4. `reference/terraform-patterns.md` にHCLテンプレート追加
-5. （任意）`reference/destinations/{connector_name}.md` に詳細リファレンス作成
+3. `reference/destinations/{connector_name}/` ディレクトリを作成し、以下のファイルを配置:
+   - `README.md` — 概要・接続方法・Terraform設定
+   - `env-vars.json` — 環境変数定義
+4. （任意）`examples/{src}-to-{connector_name}/` にサンプルHCL追加

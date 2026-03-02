@@ -104,7 +104,7 @@ head -1 /tmp/s3-sample-file | tr '\t' '\n' | cut -d: -f1
 
 ## Step 2: 型変換
 
-**reference/type-mapping.md** の Amazon S3 / ファイルベースソース セクションに従い、カラム情報を変換する。
+**reference/sources/s3/type-mapping.md** に従い、カラム情報を変換する。
 
 ### CSV / LTSV の場合
 1. ヘッダー行/ラベル名をそのまま `columns` の `name` に使用

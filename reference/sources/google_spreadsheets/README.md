@@ -159,7 +159,7 @@ input_option = {
 
 ## Type Mapping
 
-See `reference/type-mapping.md` の「Google Spreadsheets」セクションを参照。
+See `reference/sources/google_spreadsheets/type-mapping.md` の「Google Spreadsheets」セクションを参照。
 
 Google Spreadsheets にはフォーマルな型定義がないため、
 サンプルデータからの推論で型を決定する。デフォルトは `string`。

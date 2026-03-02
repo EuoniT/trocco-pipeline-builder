@@ -317,7 +317,7 @@ columns = [
 
 ## Type Mapping
 
-See `reference/type-mapping.md` の「Amazon S3 / ファイルベースソース」セクションを参照。
+See `reference/sources/s3/type-mapping.md` の「Amazon S3 / ファイルベースソース」セクションを参照。
 
 ファイルフォーマットによって型推論方法が異なる:
 - CSV/LTSV: サンプルデータからの推論（Google Spreadsheetsと同じルール）

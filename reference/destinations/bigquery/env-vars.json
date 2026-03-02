@@ -1,0 +1,35 @@
+{
+  "display_name": "BigQuery",
+  "description": "TROCCO管理画面でBigQuery接続を作成し、そのIDを設定",
+  "modes": null,
+  "always": [
+    {
+      "name": "BQ_CONNECTION_ID",
+      "required": true,
+      "sensitive": false,
+      "description": "TROCCO管理画面で作成した BigQuery 接続のID",
+      "example": ""
+    },
+    {
+      "name": "BQ_DATASET",
+      "required": true,
+      "sensitive": false,
+      "description": "BigQuery データセット名",
+      "example": ""
+    },
+    {
+      "name": "BQ_TABLE",
+      "required": true,
+      "sensitive": false,
+      "description": "BigQuery テーブル名",
+      "example": ""
+    },
+    {
+      "name": "BQ_LOCATION",
+      "required": false,
+      "sensitive": false,
+      "description": "BigQuery ロケーション",
+      "example": "asia-northeast1"
+    }
+  ]
+}

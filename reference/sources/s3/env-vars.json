@@ -1,0 +1,90 @@
+{
+  "display_name": "Amazon S3",
+  "description": "Amazon S3 ファイルベースソース",
+  "modes": {
+    "a": {
+      "label": "既存接続を使う（推奨）",
+      "description": "TROCCO管理画面で S3 接続を事前に作成し、そのIDを設定",
+      "variables": [
+        {
+          "name": "S3_CONNECTION_ID",
+          "required": true,
+          "sensitive": false,
+          "description": "TROCCO管理画面で作成した S3 接続のID",
+          "example": ""
+        }
+      ]
+    },
+    "b": {
+      "label": "Terraformで新規作成",
+      "description": "S3_CONNECTION_ID を空にすると、以下の情報でTerraformが接続を新規作成",
+      "variables": [
+        {
+          "name": "S3_AWS_AUTH_TYPE",
+          "required": true,
+          "sensitive": false,
+          "description": "AWS認証方式: \"iam_user\" または \"assume_role\"",
+          "example": "iam_user"
+        },
+        {
+          "name": "S3_AWS_ACCESS_KEY_ID",
+          "required": false,
+          "sensitive": true,
+          "description": "IAM Userのアクセスキー（iam_user時のみ必須）",
+          "example": ""
+        },
+        {
+          "name": "S3_AWS_SECRET_ACCESS_KEY",
+          "required": false,
+          "sensitive": true,
+          "description": "IAM Userのシークレットキー（iam_user時のみ必須）",
+          "example": ""
+        },
+        {
+          "name": "S3_AWS_ACCOUNT_ID",
+          "required": false,
+          "sensitive": false,
+          "description": "AWSアカウントID（assume_role時のみ必須）",
+          "example": "123456789012"
+        },
+        {
+          "name": "S3_AWS_ROLE_NAME",
+          "required": false,
+          "sensitive": false,
+          "description": "IAMロール名（assume_role時のみ必須）",
+          "example": "your-role-name"
+        }
+      ]
+    }
+  },
+  "always": [
+    {
+      "name": "S3_BUCKET",
+      "required": true,
+      "sensitive": false,
+      "description": "S3バケット名",
+      "example": "your-bucket-name"
+    },
+    {
+      "name": "S3_PATH_PREFIX",
+      "required": true,
+      "sensitive": false,
+      "description": "S3パスプレフィックス",
+      "example": "data/"
+    },
+    {
+      "name": "S3_REGION",
+      "required": false,
+      "sensitive": false,
+      "description": "AWSリージョン（デフォルト: ap-northeast-1）",
+      "example": "ap-northeast-1"
+    },
+    {
+      "name": "S3_FILE_FORMAT",
+      "required": true,
+      "sensitive": false,
+      "description": "ファイルフォーマット: csv, jsonl, jsonpath, parquet, excel, ltsv, xml",
+      "example": "csv"
+    }
+  ]
+}
