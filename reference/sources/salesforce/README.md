@@ -115,7 +115,7 @@ resource "trocco_connection" "salesforce_source" {
 input_option_type = "salesforce"
 input_option = {
   salesforce_input_option = {
-    salesforce_connection_id    = trocco_connection.salesforce_source.id
+    salesforce_connection_id    = local.salesforce_connection_id
     object                     = var.salesforce_object_name
     object_acquisition_method  = var.salesforce_object_acquisition_method
 

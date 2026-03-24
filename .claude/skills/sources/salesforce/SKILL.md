@@ -96,7 +96,7 @@ echo "HTTP Status: $HTTP_CODE"
 ```bash
 jq -r '
   .fields[]
-  | select(.type != "base64")
+  | select(.type != "base64" and .type != "textarea")
   | [.name, .type, .label] | @tsv
 ' /tmp/salesforce-describe-response.json | sort
 ```
