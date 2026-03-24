@@ -56,8 +56,8 @@ set -a && source .env.local && set +a
 
 ```bash
 set -a && source .env.local && set +a
-if [ -n "${PREFIX}_CONNECTION_ID" ]; then
-  echo "{PREFIX}_CONNECTION_ID=${!PREFIX_CONNECTION_ID} (設定済み → このIDを使用)"
+if [ -n "${{PREFIX}_CONNECTION_ID}" ]; then
+  echo "{PREFIX}_CONNECTION_ID=${{PREFIX}_CONNECTION_ID} (設定済み → このIDを使用)"
 else
   RESULT=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
     "https://trocco.io/api/connections/{connector_name}" \

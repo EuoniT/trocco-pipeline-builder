@@ -22,6 +22,7 @@ allowed-tools: Bash, Read, Write, Glob, Grep
 ソース名を正規化（スペースはアンダースコアに、小文字化）:
 - "kintone" → `kintone`
 - "google spreadsheets" / "Google Spreadsheets" → `google_spreadsheets`
+- "Amazon S3" / "S3" / "s3" / "amazon s3" → `s3`
 
 デスティネーション名を正規化:
 - "BigQuery" / "bigquery" → `bigquery`
