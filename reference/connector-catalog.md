@@ -9,7 +9,7 @@
 | PostgreSQL | postgresql | PG_HOST, PG_PORT, PG_USER, PG_PASSWORD, PG_DATABASE | TROCCO側で自動取得 |
 | BigQuery | bigquery | BQ_PROJECT, BQ_DATASET, BQ_TABLE | TROCCO側で自動取得 |
 | Salesforce | salesforce | SF_CONNECTION_ID（TROCCO上でOAuth済み） | TROCCO側で自動取得 |
-| Google Spreadsheets | google_spreadsheets | GS_CONNECTION_ID, GS_SPREADSHEET_ID | シート構造から推定 |
+| Google Spreadsheets | google_spreadsheets | GS_CONNECTION_ID or GS_SERVICE_ACCOUNT_JSON_KEY, GS_SPREADSHEET_ID | シート構造から推定 |
 | Amazon S3 | s3 | S3_CONNECTION_ID, S3_BUCKET, S3_PATH | ヘッダ行から推定 |
 | Google Cloud Storage | gcs | GCS_CONNECTION_ID, GCS_BUCKET, GCS_PATH | ヘッダ行から推定 |
 | Snowflake | snowflake | SNOWFLAKE_HOST, SNOWFLAKE_USER, SNOWFLAKE_PASSWORD, SNOWFLAKE_WAREHOUSE, SNOWFLAKE_DATABASE, SNOWFLAKE_SCHEMA | TROCCO側で自動取得 |

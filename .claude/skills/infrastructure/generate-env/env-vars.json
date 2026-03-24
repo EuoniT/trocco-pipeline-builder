@@ -1,0 +1,239 @@
+{
+  "common": {
+    "description": "TROCCO（必須）",
+    "variables": [
+      {
+        "name": "TROCCO_API_KEY",
+        "required": true,
+        "sensitive": true,
+        "description": "TROCCO管理画面 > APIキー管理 から取得。APIアクセスにはAdvanced以上のプランが必要",
+        "example": ""
+      }
+    ]
+  },
+  "sources": {
+    "kintone": {
+      "display_name": "kintone",
+      "description": "kintone開発者ライセンス: https://kintone.dev/en/developer-license-registration-form/",
+      "modes": {
+        "a": {
+          "label": "既存接続を使う（推奨）",
+          "description": "TROCCO管理画面で kintone 接続を事前に作成し、そのIDを設定",
+          "variables": [
+            {
+              "name": "KINTONE_CONNECTION_ID",
+              "required": true,
+              "sensitive": false,
+              "description": "TROCCO管理画面で作成した kintone 接続のID",
+              "example": ""
+            }
+          ]
+        },
+        "b": {
+          "label": "Terraformで新規作成",
+          "description": "KINTONE_CONNECTION_ID を空にすると、以下の情報でTerraformが接続を新規作成",
+          "variables": [
+            {
+              "name": "KINTONE_DOMAIN",
+              "required": true,
+              "sensitive": false,
+              "description": "kintoneのサブドメイン",
+              "example": "your-subdomain.cybozu.com"
+            },
+            {
+              "name": "KINTONE_API_TOKEN",
+              "required": true,
+              "sensitive": true,
+              "description": "kintone APIトークン",
+              "example": "your_kintone_api_token"
+            }
+          ]
+        }
+      },
+      "always": [
+        {
+          "name": "KINTONE_APP_ID",
+          "required": true,
+          "sensitive": false,
+          "description": "kintone アプリID",
+          "example": "1"
+        }
+      ]
+    },
+    "google_spreadsheets": {
+      "display_name": "Google Spreadsheets",
+      "description": "Google Spreadsheets ソース",
+      "modes": {
+        "a": {
+          "label": "既存接続を使う（推奨）",
+          "description": "TROCCO管理画面で Google Spreadsheets 接続を事前に作成し、そのIDを設定",
+          "variables": [
+            {
+              "name": "GS_CONNECTION_ID",
+              "required": true,
+              "sensitive": false,
+              "description": "TROCCO管理画面で作成した Google Spreadsheets 接続のID",
+              "example": ""
+            }
+          ]
+        },
+        "b": {
+          "label": "Terraformで新規作成",
+          "description": "GS_CONNECTION_ID を空にすると、以下の情報でTerraformが接続を新規作成",
+          "variables": [
+            {
+              "name": "GS_SERVICE_ACCOUNT_JSON_KEY",
+              "required": true,
+              "sensitive": true,
+              "description": "サービスアカウントのJSONキーファイルの内容",
+              "example": ""
+            }
+          ]
+        }
+      },
+      "always": [
+        {
+          "name": "GS_SPREADSHEET_ID",
+          "required": true,
+          "sensitive": false,
+          "description": "スプレッドシートIDをURLから取得",
+          "example": "your_spreadsheet_id"
+        },
+        {
+          "name": "GS_WORKSHEET_TITLE",
+          "required": false,
+          "sensitive": false,
+          "description": "ワークシート名（省略時は最初のシート）",
+          "example": "Sheet1"
+        }
+      ]
+    }
+  },
+  "destinations": {
+    "bigquery": {
+      "display_name": "BigQuery",
+      "description": "TROCCO管理画面でBigQuery接続を作成し、そのIDを設定",
+      "modes": null,
+      "always": [
+        {
+          "name": "BQ_CONNECTION_ID",
+          "required": true,
+          "sensitive": false,
+          "description": "TROCCO管理画面で作成した BigQuery 接続のID",
+          "example": ""
+        },
+        {
+          "name": "BQ_DATASET",
+          "required": true,
+          "sensitive": false,
+          "description": "BigQuery データセット名",
+          "example": ""
+        },
+        {
+          "name": "BQ_TABLE",
+          "required": true,
+          "sensitive": false,
+          "description": "BigQuery テーブル名",
+          "example": ""
+        },
+        {
+          "name": "BQ_LOCATION",
+          "required": false,
+          "sensitive": false,
+          "description": "BigQuery ロケーション",
+          "example": "asia-northeast1"
+        }
+      ]
+    },
+    "snowflake": {
+      "display_name": "Snowflake",
+      "description": "Snowflake無料トライアル: https://signup.snowflake.com/",
+      "modes": {
+        "a": {
+          "label": "既存接続を使う",
+          "description": "TROCCO管理画面で Snowflake 接続を事前に作成し、そのIDを設定",
+          "variables": [
+            {
+              "name": "SNOWFLAKE_CONNECTION_ID",
+              "required": true,
+              "sensitive": false,
+              "description": "TROCCO管理画面で作成した Snowflake 接続のID",
+              "example": ""
+            }
+          ]
+        },
+        "b": {
+          "label": "Terraformで新規作成",
+          "description": "SNOWFLAKE_CONNECTION_ID を空にすると、以下の情報でTerraformが接続を新規作成",
+          "variables": [
+            {
+              "name": "SNOWFLAKE_HOST",
+              "required": true,
+              "sensitive": false,
+              "description": "Snowflakeアカウントのホスト名",
+              "example": "your-account.snowflakecomputing.com"
+            },
+            {
+              "name": "SNOWFLAKE_USER",
+              "required": true,
+              "sensitive": false,
+              "description": "Snowflakeユーザー名",
+              "example": "TROCCO_USER"
+            },
+            {
+              "name": "SNOWFLAKE_AUTH_METHOD",
+              "required": false,
+              "sensitive": false,
+              "description": "認証方式: \"user_password\"（デフォルト）または \"key_pair\"",
+              "example": "user_password"
+            },
+            {
+              "name": "SNOWFLAKE_PASSWORD",
+              "required": false,
+              "sensitive": true,
+              "description": "user_password の場合のパスワード",
+              "example": "your_snowflake_password"
+            },
+            {
+              "name": "SNOWFLAKE_PRIVATE_KEY",
+              "required": false,
+              "sensitive": true,
+              "description": "key_pair の場合の秘密鍵（\\n リテラルで改行を記載）",
+              "example": ""
+            },
+            {
+              "name": "SNOWFLAKE_WAREHOUSE",
+              "required": true,
+              "sensitive": false,
+              "description": "Snowflake ウェアハウス名",
+              "example": "COMPUTE_WH"
+            },
+            {
+              "name": "SNOWFLAKE_DATABASE",
+              "required": true,
+              "sensitive": false,
+              "description": "Snowflake データベース名",
+              "example": "DEMO_DB"
+            },
+            {
+              "name": "SNOWFLAKE_SCHEMA",
+              "required": false,
+              "sensitive": false,
+              "description": "Snowflake スキーマ名",
+              "example": "PUBLIC"
+            }
+          ]
+        }
+      },
+      "always": [
+        {
+          "name": "SNOWFLAKE_ROLE",
+          "required": true,
+          "sensitive": false,
+          "description": "Snowflake ロール名（TROCCOに割り当てたロール）",
+          "example": "TROCCO_ROLE"
+        }
+      ]
+    }
+  }
+}

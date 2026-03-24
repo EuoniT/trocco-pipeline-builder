@@ -17,11 +17,84 @@ Technical design overview of TROCCO Pipeline Builder.
 ### Definition of "No Programming"
 
 Users write zero lines of Python, JavaScript, Shell scripts, or any procedural code. The system consists entirely of:
-- **Markdown prompts** (`.claude/commands/setup-pipeline.md`) — declarative instructions
+- **Markdown prompts** (`.claude/commands/setup-pipeline.md` + `skills/*.md`) — declarative instructions
 - **Terraform HCL** — declarative infrastructure configuration
 - **Reference documents** (`reference/*.md`) — knowledge base for Claude Code
 
 Claude Code autonomously executes `curl`, `jq`, and `terraform` commands based on prompt instructions.
+
+## Multi-Skill Architecture
+
+The system uses a modular orchestrator pattern where `setup-pipeline.md` acts as the entry point,
+dynamically selecting and composing source/destination Skills based on user input.
+
+**Scalability:** M sources x N destinations = **M+N Skill files** (not M*N).
+
+```
+User input: "/setup-pipeline kintone to BigQuery"
+        │
+        ▼
+┌───────────────────────────────────┐
+│  setup-pipeline.md                │  ← Orchestrator (~120 lines)
+│  - Parse input (source/dest)      │
+│  - Check connector-catalog.md     │
+│  - Read & execute source Skill    │
+│  - Read destination Skill         │
+│  - Integrate HCL generation       │
+│  - Read & execute procedures      │
+└──────┬──────────┬─────────────────┘
+       │          │
+  Read │          │ Read
+       ▼          ▼
+┌────────────┐ ┌─────────────────┐
+│source_     │ │destination_     │
+│kintone.md  │ │bigquery.md      │
+│- Schema    │ │- Connection     │
+│  retrieval │ │  check          │
+│- Type      │ │- HCL rules     │
+│  mapping   │ │- Output options │
+│- Connection│ │                 │
+│  check     │ │                 │
+└────────────┘ └─────────────────┘
+       │          │
+       └────┬─────┘
+            │ Read (as needed)
+            ▼
+┌───────────────────────────────┐
+│  .claude/skills/infrastructure/│  ← Common procedure Skills
+│  - env-check/SKILL.md         │
+│  - terraform-execute/SKILL.md │
+│  - test-and-report/SKILL.md   │
+└───────────────────────────────┘
+```
+
+### Skill Responsibilities
+
+| Component | Responsibility |
+|-----------|----------------|
+| Orchestrator (`setup-pipeline.md`) | Input parsing, Skill selection, HCL integration, safety rules |
+| Source Skills (`skills/sources/{connector}/SKILL.md`) | Schema retrieval, type mapping, source connection check, input_option HCL |
+| Destination Skills (`skills/destinations/{connector}/SKILL.md`) | Destination connection check, output_option HCL, load modes |
+| Common Procedure Skills (`skills/infrastructure/`) | Environment check, terraform plan/apply, test execution & reporting |
+
+### Adding a New Connector
+
+**New source:**
+1. Copy `.claude/skills/sources/_template.md` to `.claude/skills/sources/{name}/SKILL.md`
+2. Replace placeholders and add connector-specific logic
+3. (Optional) Create `reference/sources/{name}.md` for detailed reference
+4. Add entry to `reference/connector-catalog.md`
+5. Add environment variable definitions to `.claude/skills/infrastructure/generate-env/env-vars.json` (`sources` section)
+6. **No changes to orchestrator required** (dynamic Skill detection via Glob)
+
+**New destination:**
+1. Copy `.claude/skills/destinations/_template.md` to `.claude/skills/destinations/{name}/SKILL.md`
+2. Replace placeholders and add connector-specific logic
+3. (Optional) Create `reference/destinations/{name}.md` for detailed reference
+4. Add entry to `reference/connector-catalog.md`
+5. Add HCL template to `reference/terraform-patterns.md`
+6. Add environment variable definitions to `.claude/skills/infrastructure/generate-env/env-vars.json` (`destinations` section)
+7. **No changes to orchestrator required**
 
 ## Processing Flow
 
@@ -30,73 +103,72 @@ User input: "/setup-pipeline kintone to Snowflake"
     │
     ▼
 ┌─────────────────────────────────────────┐
+│ Pre-Step: .env.local Template           │
+│ - Check if .env.local exists            │
+│ - If missing: generate template via     │
+│   generate-env Skill, then stop         │
+│ - If exists: proceed to Step 0          │
+└─────────────┬───────────────────────────┘
+              │
+              ▼
+┌─────────────────────────────────────────┐
 │ Step 0: Environment Check               │
-│ - terraform version                     │
+│ Read: .claude/skills/infrastructure/     │
+│       env-check/SKILL.md                │
+│ - terraform version, jq check           │
 │ - TROCCO_API_KEY verification           │
-│ - Source-specific env vars              │
+│ - Source/dest env vars (from Skills)    │
 └─────────────┬───────────────────────────┘
               │
               ▼
 ┌─────────────────────────────────────────┐
-│ Step 1: Source Schema Retrieval         │
-│ curl → kintone Get Form Fields API     │
-│ → /tmp/kintone-fields-response.json    │
+│ Step 1-3 (src): Source Skill Execution  │
+│ Read: skills/sources/{src}/SKILL.md     │
+│ - Schema/field retrieval                │
+│ - Field → column type mapping           │
+│ - Source connection check               │
 └─────────────┬───────────────────────────┘
               │
               ▼
 ┌─────────────────────────────────────────┐
-│ Step 2: Field → Column Mapping          │
-│ jq for field parsing                    │
-│ kintone type → TROCCO column type      │
-│ → input_option_columns array           │
-│ → filter_columns array                 │
-└─────────────┬───────────────────────────┘
-              │
-              ▼
-┌─────────────────────────────────────────┐
-│ Step 3: TROCCO Connection Check         │
-│ curl → TROCCO API (connections)        │
-│ Existing → use ID                      │
-│ None → create via Terraform            │
+│ Step 3 (dest): Destination Skill        │
+│ Read: skills/destinations/{dest}/SKILL.md│
+│ - Destination connection check          │
+│ - Output option HCL info               │
 └─────────────┬───────────────────────────┘
               │
               ▼
 ┌─────────────────────────────────────────┐
 │ Step 4: Terraform HCL Generation        │
-│ Write tool → main.tf                   │
-│ Write tool → variables.tf              │
-│ Write tool → outputs.tf                │
-│ Write tool → terraform.tfvars          │
+│ Integrate source + dest HCL info        │
+│ Write: main.tf, variables.tf,           │
+│        outputs.tf, terraform.tfvars     │
 └─────────────┬───────────────────────────┘
               │
               ▼
 ┌─────────────────────────────────────────┐
-│ Step 5: terraform plan                  │
-│ → Present results to user              │
-│ → Fix HCL on error → re-plan          │
+│ Step 5-6: Terraform Plan/Apply          │
+│ Read: .claude/skills/infrastructure/     │
+│       terraform-execute/SKILL.md        │
+│ → Plan → user approval → apply         │
 │ → Stop here if --dry-run               │
 └─────────────┬───────────────────────────┘
-              │ User approval
-              ▼
-┌─────────────────────────────────────────┐
-│ Step 6: terraform apply                 │
-│ → Capture resource IDs                 │
-└─────────────┬───────────────────────────┘
               │
               ▼
 ┌─────────────────────────────────────────┐
-│ Step 7: Test Execution                  │
-│ curl → TROCCO API (POST job)           │
-│ → Poll for completion                  │
-└─────────────┬───────────────────────────┘
-              │
-              ▼
-┌─────────────────────────────────────────┐
-│ Step 8: Result Report                   │
-│ Pipeline info, transfer results,       │
-│ next steps                             │
+│ Step 7-8: Test & Report                 │
+│ Read: .claude/skills/infrastructure/     │
+│       test-and-report/SKILL.md          │
+│ → Execute job → poll → report          │
 └─────────────────────────────────────────┘
 ```
+
+## 環境変数テンプレート生成
+
+`.claude/skills/infrastructure/generate-env/SKILL.md` が `.env.local` テンプレート生成を担当する。
+同ディレクトリの `env-vars.json` を Read で読み取り、指定されたソース/デスティネーションに必要な変数のみを含むテンプレートを Write ツールで出力する（外部スクリプト不要）。
+
+`env-vars.json` は全コネクタの環境変数定義を構造化データとして持つ。Skill のデータソースであると同時に、新規コネクタ追加時の変数登録先でもある。
 
 ## Key Technical Decisions
 
@@ -162,13 +234,18 @@ The `snowflake_output_option` exists in Terraform Provider schema but lacks offi
 
 ## Extensibility
 
-Adding a new connector requires only 1 file:
+Adding a new connector requires only 1 Skill file + optional reference. Use the provided templates:
 
 ```
-reference/sources/{connector}.md    # or reference/destinations/{connector}.md
+.claude/skills/sources/_template.md                    # Source template (copy to start)
+.claude/skills/sources/{connector}/SKILL.md            # Source Skill
+.claude/skills/destinations/_template.md               # Destination template (copy to start)
+.claude/skills/destinations/{connector}/SKILL.md       # Destination Skill
+reference/sources/{connector}.md                       # (Optional) Detailed reference
+reference/destinations/{connector}.md                  # (Optional) Detailed reference
 ```
 
-Update `reference/connector-catalog.md` with the new entry. No changes to `setup-pipeline.md` needed — Claude Code dynamically reads `reference/` at runtime.
+Update `reference/connector-catalog.md` with the new entry. No changes to the orchestrator (`setup-pipeline.md`) needed — it dynamically detects Skills via Glob at runtime.
 
 ## Technical Risks
 

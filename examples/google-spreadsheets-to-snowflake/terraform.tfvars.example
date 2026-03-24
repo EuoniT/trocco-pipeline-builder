@@ -1,4 +1,4 @@
-# Example terraform.tfvars for kintone → Snowflake pipeline
+# Example terraform.tfvars for Google Spreadsheets → Snowflake pipeline
 #
 # Copy this file to terraform.tfvars and fill in your values:
 #   cp terraform.tfvars.example terraform.tfvars
@@ -9,18 +9,23 @@
 #
 # Inject via environment variables instead:
 #   export TF_VAR_trocco_api_key="$TROCCO_API_KEY"
-#   export TF_VAR_kintone_api_token="$KINTONE_API_TOKEN"
+#   export TF_VAR_gs_service_account_json_key="$GS_SERVICE_ACCOUNT_JSON_KEY"  # モードBのみ
 #   export TF_VAR_snowflake_password="$SNOWFLAKE_PASSWORD"      # user_password認証の場合
 #   export TF_VAR_snowflake_private_key="$SNOWFLAKE_PRIVATE_KEY" # key_pair認証の場合
 
-# trocco_api_key    → TF_VAR_trocco_api_key で注入（tfvarsには書かない）
+# trocco_api_key                → TF_VAR_trocco_api_key で注入（tfvarsには書かない）
+# gs_service_account_json_key   → TF_VAR_gs_service_account_json_key で注入（モードBのみ）
 
-kintone_connection_name = "kintone-customer-mgmt"
-kintone_domain          = "example.cybozu.com"
-# kintone_api_token → TF_VAR_kintone_api_token で注入（tfvarsには書かない）
-kintone_app_id          = "1"
-kintone_app_name        = "Customer Management"
+# Google Spreadsheets接続: モードA（既存接続参照）の場合は connection_id を設定
+# gs_connection_id = 123
+gs_connection_name = "gs-demo"
+gs_spreadsheet_id  = "your_spreadsheet_id"
+gs_worksheet_title = "Sheet1"
+gs_start_row       = 2
+gs_start_column    = "A"
 
+# Snowflake接続: モードA（既存接続参照）の場合は connection_id を設定
+# snowflake_connection_id = 456
 snowflake_connection_name = "snowflake-demo"
 snowflake_host            = "xxx.snowflakecomputing.com"
 snowflake_user            = "TROCCO_USER"
@@ -32,27 +37,23 @@ snowflake_role            = "TROCCO_ROLE"  # Snowflakeで作成したTROCCO用�
 snowflake_warehouse       = "COMPUTE_WH"
 snowflake_database        = "DEMO_DB"
 snowflake_schema          = "PUBLIC"
-snowflake_table           = "kintone_customers"
+snowflake_table           = "spreadsheet_data"
 snowflake_load_mode       = "replace"
 
-job_name = "kintone-customers-to-snowflake"
+job_name = "google-spreadsheets-to-snowflake"
 
 input_columns = [
-  { name = "Record Number", type = "long" },
-  { name = "Customer Name", type = "string" },
+  { name = "ID", type = "long" },
+  { name = "Name", type = "string" },
   { name = "Email", type = "string" },
-  { name = "Phone", type = "string" },
-  { name = "Company", type = "string" },
-  { name = "Created At", type = "timestamp", format = "%Y-%m-%dT%H:%M:%S%z" },
-  { name = "Updated At", type = "timestamp", format = "%Y-%m-%dT%H:%M:%S%z" },
+  { name = "Amount", type = "double" },
+  { name = "Date", type = "timestamp", format = "%Y-%m-%d" },
 ]
 
 filter_columns = [
-  { name = "record_number", src = "Record Number", type = "long" },
-  { name = "customer_name", src = "Customer Name", type = "string" },
+  { name = "id", src = "ID", type = "long" },
+  { name = "name", src = "Name", type = "string" },
   { name = "email", src = "Email", type = "string" },
-  { name = "phone", src = "Phone", type = "string" },
-  { name = "company", src = "Company", type = "string" },
-  { name = "created_at", src = "Created At", type = "timestamp", format = "%Y-%m-%dT%H:%M:%S%z" },
-  { name = "updated_at", src = "Updated At", type = "timestamp", format = "%Y-%m-%dT%H:%M:%S%z" },
+  { name = "amount", src = "Amount", type = "double" },
+  { name = "date", src = "Date", type = "timestamp", format = "%Y-%m-%d" },
 ]

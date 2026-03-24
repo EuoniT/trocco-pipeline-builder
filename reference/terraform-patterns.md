@@ -78,20 +78,31 @@ export TF_VAR_trocco_api_key="$TROCCO_API_KEY"
 # モードに応じて接続情報を注入
 # モードA: 既存接続ID参照
 [ -n "$KINTONE_CONNECTION_ID" ] && export TF_VAR_kintone_connection_id="$KINTONE_CONNECTION_ID"
+[ -n "$GS_CONNECTION_ID" ] && export TF_VAR_gs_connection_id="$GS_CONNECTION_ID"
 [ -n "$SNOWFLAKE_CONNECTION_ID" ] && export TF_VAR_snowflake_connection_id="$SNOWFLAKE_CONNECTION_ID"
 
 # モードB: Terraform新規作成（接続IDが空の場合のみ必要）
 [ -z "$KINTONE_CONNECTION_ID" ] && export TF_VAR_kintone_api_token="$KINTONE_API_TOKEN"
-[ -z "$SNOWFLAKE_CONNECTION_ID" ] && export TF_VAR_snowflake_password="$SNOWFLAKE_PASSWORD"
+[ -z "$GS_CONNECTION_ID" ] && export TF_VAR_gs_service_account_json_key="$GS_SERVICE_ACCOUNT_JSON_KEY"
+if [ -z "$SNOWFLAKE_CONNECTION_ID" ]; then
+  export TF_VAR_snowflake_auth_method="${SNOWFLAKE_AUTH_METHOD:-user_password}"
+  if [ "$SNOWFLAKE_AUTH_METHOD" = "key_pair" ]; then
+    export TF_VAR_snowflake_private_key="$(printf '%b' "$SNOWFLAKE_PRIVATE_KEY")"
+  else
+    export TF_VAR_snowflake_password="$SNOWFLAKE_PASSWORD"
+  fi
+fi
 
 terraform plan -out=tfplan
 ```
 
 terraform.tfvars にはsensitive値を書かない。コメントで環境変数注入を案内:
 ```hcl
-# trocco_api_key    → TF_VAR_trocco_api_key で注入（tfvarsに書くとenv varが上書きされる）
-# kintone_api_token → TF_VAR_kintone_api_token で注入（モードBのみ）
-# snowflake_password → TF_VAR_snowflake_password で注入（モードBのみ）
+# trocco_api_key              → TF_VAR_trocco_api_key で注入（tfvarsに書くとenv varが上書きされる）
+# kintone_api_token            → TF_VAR_kintone_api_token で注入（モードBのみ）
+# gs_service_account_json_key  → TF_VAR_gs_service_account_json_key で注入（GS モードBのみ）
+# snowflake_password           → TF_VAR_snowflake_password で注入（SF モードB + user_password認証）
+# snowflake_private_key        → TF_VAR_snowflake_private_key で注入（SF モードB + key_pair認証）
 ```
 
 ---
@@ -144,8 +155,9 @@ resource "trocco_connection" "snowflake_dest" {
 
   host        = var.snowflake_host
   user_name   = var.snowflake_user
-  auth_method = "user_password"
-  password    = var.snowflake_password
+  auth_method = var.snowflake_auth_method
+  password    = var.snowflake_auth_method == "user_password" ? var.snowflake_password : null
+  private_key = var.snowflake_auth_method == "key_pair" ? var.snowflake_private_key : null
   role        = var.snowflake_role
 }
 
@@ -285,17 +297,34 @@ variable "snowflake_user" {
   default     = ""
 }
 
+variable "snowflake_auth_method" {
+  description = "Snowflake認証方式: user_password or key_pair"
+  type        = string
+  default     = "user_password"
+
+  validation {
+    condition     = contains(["user_password", "key_pair"], var.snowflake_auth_method)
+    error_message = "snowflake_auth_method must be 'user_password' or 'key_pair'."
+  }
+}
+
 variable "snowflake_password" {
-  description = "Snowflakeパスワード（新規作成時のみ使用）"
+  description = "Snowflakeパスワード（auth_method = user_password 時のみ使用）"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "snowflake_private_key" {
+  description = "Snowflake秘密鍵（auth_method = key_pair 時のみ使用）"
   type        = string
   sensitive   = true
   default     = ""
 }
 
 variable "snowflake_role" {
-  description = "Snowflakeロール"
+  description = "Snowflakeロール（TROCCO用ロールを指定）"
   type        = string
-  default     = "SYSADMIN"
 }
 
 variable "snowflake_warehouse" {
@@ -399,9 +428,10 @@ output "pipeline_summary" {
 # ⚠ このファイルは .gitignore に含めること
 # ⚠ sensitive値はtfvarsに書かない（TF_VAR_xxx 環境変数で注入）
 
-# trocco_api_key    → TF_VAR_trocco_api_key で注入（tfvarsには書かない）
-# kintone_api_token → TF_VAR_kintone_api_token で注入（tfvarsには書かない）
-# snowflake_password → TF_VAR_snowflake_password で注入（tfvarsには書かない）
+# trocco_api_key     → TF_VAR_trocco_api_key で注入（tfvarsには書かない）
+# kintone_api_token  → TF_VAR_kintone_api_token で注入（tfvarsには書かない）
+# snowflake_password    → TF_VAR_snowflake_password で注入（モードB + user_password認証）
+# snowflake_private_key → TF_VAR_snowflake_private_key で注入（モードB + key_pair認証）
 
 # kintone接続: モードA（既存接続参照）の場合は connection_id を設定
 # kintone_connection_id = 123
@@ -415,7 +445,9 @@ kintone_app_name        = "顧客管理"
 snowflake_connection_name = "snowflake-demo"
 snowflake_host            = "xxx.snowflakecomputing.com"
 snowflake_user            = "TROCCO_USER"
-snowflake_role            = "SYSADMIN"
+# snowflake_auth_method: "user_password"（デフォルト）または "key_pair"
+# snowflake_auth_method   = "key_pair"
+snowflake_role            = "TROCCO_ROLE"  # Snowflakeで作成したTROCCO用ロールを指定
 snowflake_warehouse       = "COMPUTE_WH"
 snowflake_database        = "DEMO_DB"
 snowflake_schema          = "PUBLIC"
@@ -631,3 +663,413 @@ terraform plan -out=tfplan
 ```
 
 ※ BigQueryはTROCCO接続IDで参照するため、追加のTF_VAR注入は不要
+
+---
+
+## 完全HCLテンプレート: Google Spreadsheets → Snowflake
+
+Google Spreadsheets 接続は kintone / Snowflake と同様に2モード対応:
+- **Mode A:** `gs_connection_id` で既存接続をIDで参照
+- **Mode B:** `gs_connection_id` が null → `service_account_json_key` で Terraform 新規作成
+
+### main.tf
+
+```hcl
+terraform {
+  required_version = ">= 1.5.0"
+
+  required_providers {
+    trocco = {
+      source  = "trocco-io/trocco"
+      version = "~> 0.24"
+    }
+  }
+}
+
+provider "trocco" {
+  api_key = var.trocco_api_key
+  region  = "japan"  # "india", "korea" も選択可能
+}
+
+# ─── Google Spreadsheets 接続情報 ─────────────────────
+# gs_connection_id が設定済み → 既存接続を参照（リソース作成スキップ）
+
+resource "trocco_connection" "google_spreadsheets_source" {
+  count = var.gs_connection_id == null ? 1 : 0
+
+  name            = var.gs_connection_name
+  connection_type = "google_spreadsheets"
+  description     = "Google Spreadsheets - auto-generated by TROCCO Pipeline Builder"
+
+  service_account_json_key = var.gs_service_account_json_key
+}
+
+# ─── Snowflake 接続情報 ─────────────────────────────
+# snowflake_connection_id が設定済み → 既存接続を参照（リソース作成スキップ）
+
+resource "trocco_connection" "snowflake_dest" {
+  count = var.snowflake_connection_id == null ? 1 : 0
+
+  name            = var.snowflake_connection_name
+  connection_type = "snowflake"
+  description     = "Snowflake ${var.snowflake_database}.${var.snowflake_schema} - auto-generated by TROCCO Pipeline Builder"
+
+  host        = var.snowflake_host
+  user_name   = var.snowflake_user
+  auth_method = var.snowflake_auth_method
+  password    = var.snowflake_auth_method == "user_password" ? var.snowflake_password : null
+  private_key = var.snowflake_auth_method == "key_pair" ? var.snowflake_private_key : null
+  role        = var.snowflake_role
+}
+
+locals {
+  gs_connection_id = (
+    var.gs_connection_id != null
+    ? var.gs_connection_id
+    : trocco_connection.google_spreadsheets_source[0].id
+  )
+  snowflake_connection_id = (
+    var.snowflake_connection_id != null
+    ? var.snowflake_connection_id
+    : trocco_connection.snowflake_dest[0].id
+  )
+}
+
+# ─── 転送ジョブ定義 ─────────────────────────────────
+
+resource "trocco_job_definition" "google_spreadsheets_to_snowflake" {
+  name                     = var.job_name
+  description              = var.job_description
+  is_runnable_concurrently = false
+  retry_limit              = 2
+
+  input_option_type = "google_spreadsheets"
+  input_option = {
+    google_spreadsheets_input_option = {
+      google_spreadsheets_connection_id = local.gs_connection_id
+      spreadsheets_url                  = "https://docs.google.com/spreadsheets/d/${var.gs_spreadsheet_id}/edit"
+      worksheet_title                   = var.gs_worksheet_title
+      start_row                         = var.gs_start_row
+      start_column                      = var.gs_start_column
+      default_time_zone                 = var.gs_default_time_zone
+      null_string                       = var.gs_null_string
+
+      input_option_columns = var.input_columns
+    }
+  }
+
+  output_option_type = "snowflake"
+  output_option = {
+    snowflake_output_option = {
+      snowflake_connection_id = local.snowflake_connection_id
+      warehouse               = var.snowflake_warehouse
+      database                = var.snowflake_database
+      schema                  = var.snowflake_schema
+      table                   = var.snowflake_table
+      mode                    = var.snowflake_load_mode
+    }
+  }
+
+  filter_columns = var.filter_columns
+}
+```
+
+### variables.tf
+
+```hcl
+# ─── TROCCO ─────────────────────────────────────────
+
+variable "trocco_api_key" {
+  description = "TROCCO API Key"
+  type        = string
+  sensitive   = true
+}
+
+# ─── Google Spreadsheets ────────────────────────────
+# モードA: gs_connection_id を設定 → 既存接続を参照
+# モードB: gs_connection_id を null → service_account_json_key で新規作成
+
+variable "gs_connection_id" {
+  description = "既存TROCCO Google Spreadsheets接続ID（設定時は接続作成をスキップ）"
+  type        = number
+  default     = null
+}
+
+variable "gs_connection_name" {
+  description = "TROCCO上のGS接続名（新規作成時のみ使用）"
+  type        = string
+  default     = "gs-auto"
+}
+
+variable "gs_service_account_json_key" {
+  description = "Googleサービスアカウント JSONキー（新規作成時のみ使用）"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "gs_spreadsheet_id" {
+  description = "Google SpreadsheetのID（URLから取得）"
+  type        = string
+}
+
+variable "gs_worksheet_title" {
+  description = "ワークシート（タブ）名"
+  type        = string
+  default     = "Sheet1"
+}
+
+variable "gs_start_row" {
+  description = "データ開始行（ヘッダー=1なら通常2）"
+  type        = number
+  default     = 2
+}
+
+variable "gs_start_column" {
+  description = "開始列"
+  type        = string
+  default     = "A"
+}
+
+variable "gs_default_time_zone" {
+  description = "日付/時刻パースのデフォルトタイムゾーン"
+  type        = string
+  default     = "Asia/Tokyo"
+}
+
+variable "gs_null_string" {
+  description = "NULL扱いする文字列"
+  type        = string
+  default     = ""
+}
+
+# ─── Snowflake ───────────────────────────────────────
+
+variable "snowflake_connection_id" {
+  description = "既存TROCCO Snowflake接続ID（設定時は接続作成をスキップ）"
+  type        = number
+  default     = null
+}
+
+variable "snowflake_connection_name" {
+  description = "TROCCO上のSnowflake接続名（新規作成時のみ使用）"
+  type        = string
+  default     = "snowflake-auto"
+}
+
+variable "snowflake_host" {
+  description = "Snowflakeホスト（新規作成時のみ使用）"
+  type        = string
+  default     = ""
+}
+
+variable "snowflake_user" {
+  description = "Snowflakeユーザー名（新規作成時のみ使用）"
+  type        = string
+  default     = ""
+}
+
+variable "snowflake_auth_method" {
+  description = "Snowflake認証方式: user_password or key_pair"
+  type        = string
+  default     = "user_password"
+
+  validation {
+    condition     = contains(["user_password", "key_pair"], var.snowflake_auth_method)
+    error_message = "snowflake_auth_method must be 'user_password' or 'key_pair'."
+  }
+}
+
+variable "snowflake_password" {
+  description = "Snowflakeパスワード（auth_method = user_password 時のみ使用）"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "snowflake_private_key" {
+  description = "Snowflake秘密鍵（auth_method = key_pair 時のみ使用）"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "snowflake_role" {
+  description = "Snowflakeロール（TROCCO用ロールを指定）"
+  type        = string
+}
+
+variable "snowflake_warehouse" {
+  description = "Snowflakeウェアハウス名"
+  type        = string
+}
+
+variable "snowflake_database" {
+  description = "Snowflakeデータベース名"
+  type        = string
+}
+
+variable "snowflake_schema" {
+  description = "Snowflakeスキーマ名"
+  type        = string
+  default     = "PUBLIC"
+}
+
+variable "snowflake_table" {
+  description = "Snowflakeテーブル名"
+  type        = string
+}
+
+variable "snowflake_load_mode" {
+  description = "ロードモード (insert, insert_direct, truncate_insert, replace, merge)"
+  type        = string
+  default     = "replace"
+}
+
+# ─── Job Definition ──────────────────────────────────
+
+variable "job_name" {
+  description = "転送ジョブ名"
+  type        = string
+}
+
+variable "job_description" {
+  description = "転送ジョブの説明"
+  type        = string
+  default     = "Auto-generated by TROCCO Pipeline Builder"
+}
+
+variable "input_columns" {
+  description = "入力カラム定義"
+  type = list(object({
+    name   = string
+    type   = string
+    format = optional(string)
+  }))
+}
+
+variable "filter_columns" {
+  description = "フィルタカラム定義（ソース→デスティネーションのカラムマッピング）"
+  type = list(object({
+    name                = string
+    src                 = string
+    type                = string
+    default             = optional(string, "")
+    format              = optional(string)
+    json_expand_enabled = optional(bool, false)
+  }))
+}
+```
+
+### outputs.tf
+
+```hcl
+output "job_definition_id" {
+  description = "作成されたTROCCOジョブ定義のID"
+  value       = trocco_job_definition.google_spreadsheets_to_snowflake.id
+}
+
+output "gs_connection_id" {
+  description = "Google Spreadsheets接続ID（既存参照 or 新規作成）"
+  value       = local.gs_connection_id
+}
+
+output "snowflake_connection_id" {
+  description = "Snowflake接続ID（既存参照 or 新規作成）"
+  value       = local.snowflake_connection_id
+}
+
+output "job_name" {
+  description = "ジョブ定義名"
+  value       = trocco_job_definition.google_spreadsheets_to_snowflake.name
+}
+
+output "pipeline_summary" {
+  description = "パイプラインサマリ"
+  value = {
+    source      = "google_spreadsheets (spreadsheet_id: ${var.gs_spreadsheet_id})"
+    destination = "snowflake (${var.snowflake_database}.${var.snowflake_schema}.${var.snowflake_table})"
+    columns     = length(var.filter_columns)
+  }
+}
+```
+
+### terraform.tfvars の例
+
+```hcl
+# ⚠ このファイルは .gitignore に含めること
+# ⚠ sensitive値はtfvarsに書かない（TF_VAR_xxx 環境変数で注入）
+
+# trocco_api_key              → TF_VAR_trocco_api_key で注入（tfvarsには書かない）
+# gs_service_account_json_key → TF_VAR_gs_service_account_json_key で注入（GS モードBのみ）
+# snowflake_password          → TF_VAR_snowflake_password で注入（SF モードB + user_password認証）
+# snowflake_private_key       → TF_VAR_snowflake_private_key で注入（SF モードB + key_pair認証）
+
+# Google Spreadsheets接続: モードA（既存接続参照）の場合は connection_id を設定
+# gs_connection_id = 123
+gs_connection_name = "gs-demo"
+gs_spreadsheet_id  = "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+gs_worksheet_title = "Sheet1"
+gs_start_row       = 2
+gs_start_column    = "A"
+
+# Snowflake接続: モードA（既存接続参照）の場合は connection_id を設定
+# snowflake_connection_id = 456
+snowflake_connection_name = "snowflake-demo"
+snowflake_host            = "xxx.snowflakecomputing.com"
+snowflake_user            = "TROCCO_USER"
+# snowflake_auth_method: "user_password"（デフォルト）または "key_pair"
+# snowflake_auth_method   = "key_pair"
+snowflake_role            = "TROCCO_ROLE"  # Snowflakeで作成したTROCCO用ロールを指定
+snowflake_warehouse       = "COMPUTE_WH"
+snowflake_database        = "DEMO_DB"
+snowflake_schema          = "PUBLIC"
+snowflake_table           = "spreadsheet_data"
+snowflake_load_mode       = "replace"
+
+job_name = "google-spreadsheets-to-snowflake"
+
+input_columns = [
+  { name = "ID", type = "long" },
+  { name = "Name", type = "string" },
+  { name = "Email", type = "string" },
+  { name = "Amount", type = "double" },
+  { name = "Date", type = "timestamp", format = "%Y-%m-%d" },
+]
+
+filter_columns = [
+  { name = "id", src = "ID", type = "long" },
+  { name = "name", src = "Name", type = "string" },
+  { name = "email", src = "Email", type = "string" },
+  { name = "amount", src = "Amount", type = "double" },
+  { name = "date", src = "Date", type = "timestamp", format = "%Y-%m-%d" },
+]
+```
+
+### 機密情報の注入
+
+```bash
+source .env.local
+export TF_VAR_trocco_api_key="$TROCCO_API_KEY"
+
+# GS接続: モードに応じて注入
+if [ -n "$GS_CONNECTION_ID" ]; then
+  export TF_VAR_gs_connection_id="$GS_CONNECTION_ID"  # モードA
+else
+  export TF_VAR_gs_service_account_json_key="$GS_SERVICE_ACCOUNT_JSON_KEY"  # モードB
+fi
+
+# Snowflake接続: モードに応じて注入
+if [ -n "$SNOWFLAKE_CONNECTION_ID" ]; then
+  export TF_VAR_snowflake_connection_id="$SNOWFLAKE_CONNECTION_ID"  # モードA
+else
+  export TF_VAR_snowflake_auth_method="${SNOWFLAKE_AUTH_METHOD:-user_password}"
+  if [ "$SNOWFLAKE_AUTH_METHOD" = "key_pair" ]; then
+    export TF_VAR_snowflake_private_key="$(printf '%b' "$SNOWFLAKE_PRIVATE_KEY")"    # モードB + key_pair
+  else
+    export TF_VAR_snowflake_password="$SNOWFLAKE_PASSWORD"          # モードB + user_password
+  fi
+fi
+
+terraform plan -out=tfplan
+```

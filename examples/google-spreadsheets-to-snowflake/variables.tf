@@ -6,56 +6,62 @@ variable "trocco_api_key" {
   sensitive   = true
 }
 
-# ─── kintone ─────────────────────────────────────────
-# モードA: kintone_connection_id を設定 → 既存接続を参照（推奨）
-# モードB: kintone_connection_id を null → domain/token で新規作成
+# ─── Google Spreadsheets ────────────────────────────
+# モードA: gs_connection_id を設定 → 既存接続を参照
+# モードB: gs_connection_id を null → service_account_json_key で新規作成
 
-variable "kintone_connection_id" {
-  description = "Existing TROCCO kintone connection ID. If set, skips connection creation."
+variable "gs_connection_id" {
+  description = "Existing TROCCO Google Spreadsheets connection ID. If set, skips connection creation."
   type        = number
   default     = null
 }
 
-variable "kintone_connection_name" {
+variable "gs_connection_name" {
   description = "Connection name in TROCCO (used only when creating new connection)"
   type        = string
-  default     = "kintone-auto"
+  default     = "gs-auto"
 }
 
-variable "kintone_domain" {
-  description = "kintone domain (used only when creating new connection)"
-  type        = string
-  default     = ""
-}
-
-variable "kintone_api_token" {
-  description = "kintone API token (used only when creating new connection)"
+variable "gs_service_account_json_key" {
+  description = "Google service account JSON key (used only when creating new connection)"
   type        = string
   sensitive   = true
   default     = ""
 }
 
-variable "kintone_app_id" {
-  description = "kintone app ID"
+variable "gs_spreadsheet_id" {
+  description = "Google Spreadsheet ID (from URL)"
   type        = string
 }
 
-variable "kintone_app_name" {
-  description = "kintone app name (for labeling)"
+variable "gs_worksheet_title" {
+  description = "Worksheet (tab) name"
   type        = string
-  default     = "kintone-app"
+  default     = "Sheet1"
 }
 
-variable "kintone_guest_space_id" {
-  description = "kintone guest space ID (null if not applicable)"
-  type        = string
-  default     = null
+variable "gs_start_row" {
+  description = "Data start row (2 if row 1 is header)"
+  type        = number
+  default     = 2
 }
 
-variable "kintone_expand_subtable" {
-  description = "Whether to expand subtables"
-  type        = bool
-  default     = false
+variable "gs_start_column" {
+  description = "Start column letter"
+  type        = string
+  default     = "A"
+}
+
+variable "gs_default_time_zone" {
+  description = "Default time zone for date/time parsing"
+  type        = string
+  default     = "Asia/Tokyo"
+}
+
+variable "gs_null_string" {
+  description = "String value to treat as NULL"
+  type        = string
+  default     = ""
 }
 
 # ─── Snowflake ───────────────────────────────────────
@@ -175,17 +181,4 @@ variable "filter_columns" {
     format              = optional(string)
     json_expand_enabled = optional(bool, false)
   }))
-}
-
-# ─── Labels ──────────────────────────────────────────
-
-variable "labels" {
-  description = "Labels for the job definition"
-  type = list(object({
-    name = string
-  }))
-  default = [
-    { name = "auto-generated" },
-    { name = "trocco-pipeline-builder" }
-  ]
 }

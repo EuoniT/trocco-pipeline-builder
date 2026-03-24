@@ -12,11 +12,29 @@ errors may occur. A REST API fallback procedure is provided.
 |----------|-------------|---------|
 | `SNOWFLAKE_HOST` | Account URL | `xxx.snowflakecomputing.com` |
 | `SNOWFLAKE_USER` | Username | `TROCCO_USER` |
-| `SNOWFLAKE_PASSWORD` | Password | (sensitive) |
+| `SNOWFLAKE_AUTH_METHOD` | Auth method: `user_password` or `key_pair` | `user_password` |
+| `SNOWFLAKE_PASSWORD` | Password (user_password auth) | (sensitive) |
+| `SNOWFLAKE_PRIVATE_KEY` | Private key (key_pair auth) | (sensitive) |
 | `SNOWFLAKE_WAREHOUSE` | Warehouse name | `COMPUTE_WH` |
 | `SNOWFLAKE_DATABASE` | Database name | `DEMO_DB` |
 | `SNOWFLAKE_SCHEMA` | Schema name | `PUBLIC` |
-| `SNOWFLAKE_ROLE` | Role name | `SYSADMIN` |
+| `SNOWFLAKE_ROLE` | Role name (required) | `TROCCO_ROLE` |
+
+## Private Key Format (key_pair auth)
+
+`.env.local` に秘密鍵を設定する際は、改行を `\n` リテラルで記載する:
+```
+SNOWFLAKE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----"
+```
+
+Terraform 注入時に `printf '%b'` で実際の改行に自動変換される。
+`echo -e` ではなく `printf '%b'` を使用（POSIX互換性が高い）。
+
+手動で変換を確認する場合:
+```bash
+printf '%b' "$SNOWFLAKE_PRIVATE_KEY" | head -1
+# → -----BEGIN PRIVATE KEY-----
+```
 
 ## Terraform Configuration
 
@@ -29,8 +47,9 @@ resource "trocco_connection" "snowflake_dest" {
 
   host        = var.snowflake_host
   user_name   = var.snowflake_user
-  auth_method = "user_password"
-  password    = var.snowflake_password
+  auth_method = var.snowflake_auth_method
+  password    = var.snowflake_auth_method == "user_password" ? var.snowflake_password : null
+  private_key = var.snowflake_auth_method == "key_pair" ? var.snowflake_private_key : null
   role        = var.snowflake_role
 }
 ```
@@ -71,6 +90,24 @@ output_option = {
 | `truncate_insert` | Truncate then insert |
 | `merge` | Upsert (requires merge keys) |
 | `insert_direct` | Direct insert (no staging) |
+
+## Required Snowflake Permissions
+
+TROCCO がデータを転送するために、指定ロールに以下の権限が必要:
+
+```sql
+-- データベース・スキーマへのアクセス
+GRANT USAGE ON DATABASE {db} TO ROLE {role};
+GRANT USAGE ON SCHEMA {db}.{schema} TO ROLE {role};
+
+-- テーブル・ステージの作成（TROCCO はステージング経由でロード）
+GRANT CREATE TABLE ON SCHEMA {db}.{schema} TO ROLE {role};
+GRANT CREATE STAGE ON SCHEMA {db}.{schema} TO ROLE {role};  
+
+-- ウェアハウスの利用
+GRANT USAGE ON WAREHOUSE {wh} TO ROLE {role};
+GRANT OPERATE ON WAREHOUSE {wh} TO ROLE {role};
+```
 
 ## REST API Fallback
 
