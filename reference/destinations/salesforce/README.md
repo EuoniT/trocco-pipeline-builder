@@ -134,3 +134,39 @@ API docs:
 - For Sandbox environments, set `SALESFORCE_DEST_AUTH_END_POINT=https://test.salesforce.com/services/Soap/u/`
 - Default API version is `55.0`; update if your org requires a specific version
 - Source and destination can share the same Salesforce connection if credentials are the same (use `SALESFORCE_DEST_CONNECTION_ID` pointing to the source connection)
+
+## Known Limitations
+
+### Integer フィールドへの数値転送不可（NUMBER → Integer）
+
+**症状:** Salesforce の Integer 型フィールド（例: `NumberOfEmployees`）へ数値を転送すると、以下のエラーでレコード単位で拒否される。
+
+```
+INVALID_TYPE_ON_FIELD_IN_RECORD: 必須種別以外の値: 250.0 [NumberOfEmployees]
+```
+
+**原因:** TROCCO の Salesforce Bulk API アダプタは、`filter_columns` で `long` 型を指定しても、値を小数点付き（例: `250.0`）で Salesforce に送出する。Salesforce 側の Integer 型フィールドは `250.0` を不正値として拒否する。
+
+**検証済みの失敗パターン:**
+
+| input_columns | filter_columns | 送出値 | 結果 |
+|:---|:---|:---|:---|
+| long | long | `250.0` | NG |
+| double | long | `250.0` | NG |
+| string (VARCHAR cast) | long | `250.0` | NG |
+| string (VARCHAR cast) | string | `"250"` | NG (型不一致) |
+
+**対処方針（パイプライン自動構築時の既定ルール）:**
+
+Snowflake など NUMBER 型をソースとする場合、**Salesforce の Integer 型フィールドへの転送対象カラムは `filter_columns` から除外する**。該当カラムは別経路（手動/REST API/Formula Field 経由など）で対応する。
+
+自動生成時の判定:
+- ソースが `NUMBER(p,0)` / `INT` / `BIGINT` 等の整数系
+- デスティネーションが Salesforce Integer 型フィールド（`NumberOfEmployees` 等）
+
+上記に該当する場合は、filter_columns 生成時に対象カラムを自動的に除外し、除外理由をコメントとして HCL に残す。
+
+**参考:** Salesforce の Number(0) = Integer 型の標準フィールド例
+- `Account.NumberOfEmployees`
+- `Contact.ReportsToId` 以外の Number 系カウント
+- カスタム Number(N, 0) フィールド

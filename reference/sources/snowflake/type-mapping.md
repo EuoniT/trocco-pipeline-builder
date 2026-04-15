@@ -41,3 +41,11 @@ Snowflake の `INFORMATION_SCHEMA.COLUMNS` から取得した場合:
 - `NUMERIC_SCALE = 0` → `long`
 - `NUMERIC_SCALE > 0` → `double`
 - `NUMERIC_SCALE` が NULL（非数値型） → 他の型ルールに従う
+
+## デスティネーション別の注意事項
+
+### Salesforce デスティネーション
+
+Snowflake の `NUMBER(p,0)` （long 相当）を Salesforce の **Integer 型フィールド** に転送する場合、TROCCO の Salesforce Bulk API アダプタが値を小数点付き（例: `250.0`）で送出するため、Salesforce 側で `INVALID_TYPE_ON_FIELD_IN_RECORD` エラーとなる。
+
+**対応方針:** 該当カラムは `filter_columns` から**自動的に除外**する。詳細は `reference/destinations/salesforce/README.md` の「Known Limitations」および `.claude/skills/destinations/salesforce/SKILL.md` の「既知の制約」セクションを参照。

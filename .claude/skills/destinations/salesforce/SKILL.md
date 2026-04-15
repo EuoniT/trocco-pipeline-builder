@@ -209,6 +209,45 @@ else
 fi
 ```
 
+## 既知の制約（HCL生成時に必ず適用）
+
+### Integer 型フィールドへの数値転送不可
+
+TROCCO の Salesforce Bulk API アダプタは、`filter_columns` の `long` 型指定にかかわらず、数値を小数点付き（例: `250.0`）で送出する。Salesforce の Integer 型フィールド（例: `NumberOfEmployees`）は `250.0` を不正値として拒否するため、以下のルールで自動生成する:
+
+**ルール:** ソースが NUMBER(p,0) / long 型整数、かつデスティネーションが Salesforce Integer 型フィールドの場合、`filter_columns` から**自動的に除外**する。
+
+対象となる Salesforce 標準フィールド例:
+- `Account.NumberOfEmployees`
+- カスタム `Number(N, 0)` フィールド
+
+HCL 生成時の動作:
+1. `filter_columns` から該当カラムを除外
+2. `input_columns` は残してもよい（input_option_columnsはスキーマ定義のため）
+3. 除外理由を HCL のコメントに残す:
+   ```hcl
+   # NumberOfEmployees は対象外（TROCCO制約: long型でも250.0で送出される）
+   ```
+4. ユーザーに除外したカラムを明示的に報告する
+
+**検証済みの失敗パターン（参考）:**
+
+| input | filter | 送出値 | 結果 |
+|:---|:---|:---|:---|
+| long | long | `250.0` | NG |
+| double | long | `250.0` | NG |
+| string (VARCHAR) | long | `250.0` | NG |
+| string (VARCHAR) | string | `"250"` | NG (型不一致) |
+
+詳細は `reference/destinations/salesforce/README.md` の「Known Limitations」セクション参照。
+
+### 書き込み不可フィールドの除外
+
+以下は Salesforce の標準制約により常に除外する:
+- `Id`（自動採番）
+- `CreatedDate`, `CreatedById`, `LastModifiedDate`, `LastModifiedById`（システム管理）
+- `IsDeleted`, `SystemModstamp`（システム管理）
+
 ## アクションタイプ
 
 | action_type | 説明 |
