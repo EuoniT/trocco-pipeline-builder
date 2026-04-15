@@ -1,0 +1,83 @@
+{
+  "display_name": "Salesforce",
+  "description": "Salesforce Bulk API経由でデータを転送",
+  "modes": {
+    "a": {
+      "label": "既存接続を使う",
+      "description": "TROCCO管理画面で Salesforce 接続を事前に作成し、そのIDを設定",
+      "variables": [
+        {
+          "name": "SALESFORCE_DEST_CONNECTION_ID",
+          "required": true,
+          "sensitive": false,
+          "description": "TROCCO管理画面で作成した Salesforce 接続のID",
+          "example": ""
+        }
+      ]
+    },
+    "b": {
+      "label": "Terraformで新規作成",
+      "description": "SALESFORCE_DEST_CONNECTION_ID を空にすると、以下の情報でTerraformが接続を新規作成",
+      "variables": [
+        {
+          "name": "SALESFORCE_DEST_USERNAME",
+          "required": true,
+          "sensitive": false,
+          "description": "Salesforce ログインユーザー名",
+          "example": "user@example.com"
+        },
+        {
+          "name": "SALESFORCE_DEST_PASSWORD",
+          "required": true,
+          "sensitive": true,
+          "description": "Salesforce ログインパスワード",
+          "example": "your_salesforce_password"
+        },
+        {
+          "name": "SALESFORCE_DEST_SECURITY_TOKEN",
+          "required": true,
+          "sensitive": true,
+          "description": "Salesforce セキュリティトークン",
+          "example": "your_security_token"
+        },
+        {
+          "name": "SALESFORCE_DEST_AUTH_END_POINT",
+          "required": false,
+          "sensitive": false,
+          "description": "認証エンドポイント（デフォルト: https://login.salesforce.com/services/Soap/u/）",
+          "example": "https://login.salesforce.com/services/Soap/u/"
+        }
+      ]
+    }
+  },
+  "always": [
+    {
+      "name": "SALESFORCE_DEST_OBJECT_NAME",
+      "required": true,
+      "sensitive": false,
+      "description": "転送先Salesforceオブジェクト名（API名）",
+      "example": "Account"
+    },
+    {
+      "name": "SALESFORCE_DEST_ACTION_TYPE",
+      "required": false,
+      "sensitive": false,
+      "description": "アクションタイプ: insert（デフォルト）または upsert",
+      "example": "insert"
+    },
+    {
+      "name": "SALESFORCE_DEST_UPSERT_KEY",
+      "required": false,
+      "sensitive": false,
+      "description": "Upsertキー（action_type が upsert の場合のみ使用、External ID フィールド名）",
+      "example": "External_Id__c"
+    },
+    {
+      "name": "SALESFORCE_DEST_API_VERSION",
+      "required": false,
+      "sensitive": false,
+      "description": "Salesforce API バージョン（デフォルト: 55.0）",
+      "example": "55.0"
+    }
+  ]
+}
